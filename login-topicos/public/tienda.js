@@ -221,10 +221,15 @@ const card = document.createElement("div");
 card.classList.add("card");
 
 card.innerHTML = `
+<div class="cart-img">
 <img src="${item.image}">
+</div>
+
 <div class="card-info">
-${item.name}
-<div>$${item.price} MXN</div>
+
+<div class="product-name">${item.name}</div>
+
+<div class="price">$${item.price} MXN</div>
 
 <div class="quantity-control">
 <button onclick="cambiarCantidad(${index},-1)">-</button>
