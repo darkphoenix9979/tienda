@@ -66,7 +66,7 @@ if(token && username){
     avatar.innerText = username.charAt(0).toUpperCase();
 
     dropdown.innerHTML = `
-        <button onclick="logout()">Cerrar sesión</button>
+    <button class="menu-btn" onclick="logout()">Cerrar sesión</button>
     `;
 
 }else{
@@ -76,7 +76,7 @@ if(token && username){
     avatar.innerText = "?";
 
     dropdown.innerHTML = `
-        <button onclick="irLogin()">Iniciar sesión</button>
+    <button class="menu-btn" onclick="irLogin()">Iniciar sesión</button>
     `;
 }
 
