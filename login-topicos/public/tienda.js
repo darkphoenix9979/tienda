@@ -49,24 +49,41 @@ cargarCarrusel();
 
 
 // ==========================
-// USUARIO
+// USUARIO / ESTADO DE SESION
 // ==========================
+
 const username = localStorage.getItem("username");
+const token = localStorage.getItem("token");
 
-if (username) {
-  document.getElementById("usernameDisplay").innerText = username;
-  document.getElementById("avatar").innerText = username.charAt(0).toUpperCase();
-} else {
-  document.getElementById("usernameDisplay").innerText = "Invitado";
-  document.getElementById("avatar").innerText = "?";
+const usernameDisplay = document.getElementById("usernameDisplay");
+const avatar = document.getElementById("avatar");
+const dropdown = document.getElementById("dropdown");
+
+// Si hay sesión iniciada
+if(token && username){
+
+    usernameDisplay.innerText = username;
+    avatar.innerText = username.charAt(0).toUpperCase();
+
+    dropdown.innerHTML = `
+        <button onclick="logout()">Cerrar sesión</button>
+    `;
+
+}else{
+
+    // Usuario invitado
+    usernameDisplay.innerText = "Invitado";
+    avatar.innerText = "?";
+
+    dropdown.innerHTML = `
+        <button onclick="irLogin()">Iniciar sesión</button>
+    `;
 }
-
 
 // ==========================
 // DROPDOWN USUARIO
 // ==========================
 const userMenu = document.getElementById("userMenu");
-const dropdown = document.getElementById("dropdown");
 const arrow = document.getElementById("arrow");
 
 if (userMenu) {
