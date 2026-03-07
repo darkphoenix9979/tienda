@@ -259,20 +259,30 @@ margin-left:5px;
 }
 
 /* ==========================
-IMAGEN CARRITO SIN DISTORSIÓN
+CARRITO ARREGLADO
 ========================== */
 
 #carrito .card{
     display:flex;
     align-items:center;
     gap:15px;
+    background:#0f0f0f;
+    padding:10px;
+    border-radius:10px;
 }
 
+/* contenedor de imagen */
 #carrito .card img{
-    width:80px;
-    height:80px;
+    width:70px;
+    height:70px;
     object-fit:contain;
-    background:#111;
-    border-radius:8px;
+    background:#1a1a1a;
     padding:5px;
+    border-radius:8px;
+    flex-shrink:0;
+}
+
+/* info del producto */
+#carrito .card-info{
+    flex:1;
 }
