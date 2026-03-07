@@ -47,6 +47,53 @@ function iniciarCarrusel() {
 
 cargarCarrusel();
 
+// ==========================
+// CARGAR PRODUCTOS
+// ==========================
+async function cargarProductos(){
+
+  try{
+
+    const response = await fetch("/api/products");
+    const products = await response.json();
+
+    const contenedor = document.getElementById("productos");
+
+    contenedor.innerHTML = "";
+
+    products.forEach(product =>{
+
+      const card = document.createElement("div");
+      card.classList.add("card");
+
+      card.innerHTML = `
+      <img src="${product.image}">
+      
+      <div class="card-info">
+
+      <h3>${product.name}</h3>
+
+      <div>$${product.price} MXN</div>
+
+      <div>Stock: ${product.stock}</div>
+
+      <button onclick='addToCart(${JSON.stringify(product)})'>
+      Agregar al carrito
+      </button>
+
+      </div>
+      `;
+
+      contenedor.appendChild(card);
+
+    });
+
+  }catch(error){
+    console.error("Error cargando productos:",error);
+  }
+
+}
+
 
 // ==========================
 // USUARIO / ESTADO DE SESION
@@ -113,45 +160,10 @@ function irLogin() {
   window.location.href = "login.html";
 }
 
-
-// ==========================
-// CARGAR PRODUCTOS
-// ==========================
-async function cargarProductos() {
-  try {
-    const response = await fetch("/api/products");
-    const products = await response.json();
-
-    const contenedor = document.getElementById("productos");
-    contenedor.innerHTML = "";
-
-    products.forEach(product => {
-
-      const card = document.createElement("div");
-      card.classList.add("card");
-
-      card.innerHTML = `
-        <img src="${product.image}">
-        <div class="card-info">
-            ${product.name}
-            <div class="price">$${product.price} MXN</div>
-            <button onclick="addToCart('${product._id}')">Agregar al carrito</button>
-        </div>
-      `;
-
-      contenedor.appendChild(card);
-    });
-
-  } catch (error) {
-    console.error("Error cargando productos:", error);
-  }
-}
-
-
 // ==========================
 // AGREGAR AL CARRITO
 // ==========================
-async function addToCart(productId) {
+function addToCart(product) {
 
   if (!localStorage.getItem("token")) {
     alert("Debes iniciar sesión para comprar");
@@ -159,137 +171,168 @@ async function addToCart(productId) {
     return;
   }
 
-  try {
-    const response = await fetch("/api/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("token")
-      },
-      body: JSON.stringify({ productId, quantity: 1 })
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  const index = cart.findIndex(item => item._id === product._id);
+
+  if (index !== -1) {
+    cart[index].quantity += 1;
+  } else {
+    cart.push({
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1
     });
-
-    if (response.ok) {
-      cargarCarrito();
-    } else {
-      const data = await response.json();
-      alert(data.message || "Error agregando al carrito");
-    }
-
-  } catch (err) {
-    console.error(err);
   }
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+
+  alert("Producto agregado al carrito 🛒");
+
+  cargarCarrito();
 }
 
 
 // ==========================
 // MOSTRAR CARRITO
 // ==========================
-async function cargarCarrito() {
+function cargarCarrito(){
 
-  if (!localStorage.getItem("token")) return;
+const contenedor = document.getElementById("carrito");
+const cartCount = document.getElementById("cartCount");
 
-  try {
+if(!contenedor) return;
 
-    const response = await fetch("/api/cart", {
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("token")
-      }
-    });
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-    const cart = await response.json();
+contenedor.innerHTML="";
 
-    const contenedor = document.getElementById("carrito");
-    contenedor.innerHTML = "";
+let total = 0;
+let totalItems = 0;
 
-    if (!cart || !cart.products) return;
+cart.forEach((item,index)=>{
 
-    cart.products.forEach(item => {
+total += item.price * item.quantity;
+totalItems += item.quantity;
 
-      const card = document.createElement("div");
-      card.classList.add("card");
+const card = document.createElement("div");
+card.classList.add("card");
 
-      card.innerHTML = `
-        <img src="${item.productId.image}">
-        <div class="card-info">
-            ${item.productId.name} - $${item.productId.price} MXN
-            <div class="quantity-control">
-                <button onclick="updateQuantity('${item.productId._id}', ${item.quantity - 1})">-</button>
-                <span>${item.quantity}</span>
-                <button onclick="updateQuantity('${item.productId._id}', ${item.quantity + 1})">+</button>
-            </div>
-            <button onclick="updateQuantity('${item.productId._id}', 0)">Eliminar</button>
-        </div>
-      `;
+card.innerHTML = `
+<img src="${item.image}">
+<div class="card-info">
+${item.name}
+<div>$${item.price} MXN</div>
 
-      contenedor.appendChild(card);
-    });
+<div class="quantity-control">
+<button onclick="cambiarCantidad(${index},-1)">-</button>
+<span>${item.quantity}</span>
+<button onclick="cambiarCantidad(${index},1)">+</button>
+</div>
 
-  } catch (err) {
-    console.error(err);
-  }
+<button onclick="eliminarProducto(${index})">Eliminar</button>
+
+</div>
+`;
+
+contenedor.appendChild(card);
+
+});
+
+if(cartCount){
+cartCount.innerText = totalItems;
+}
+
+const totalHTML = document.createElement("div");
+
+totalHTML.innerHTML = `
+<h3>Total: $${total} MXN</h3>
+<button onclick="simularCompra()">Comprar</button>
+`;
+
+contenedor.appendChild(totalHTML);
+
 }
 
 
 // ==========================
-// ACTUALIZAR CANTIDAD
+// CAMBIAR CANTIDAD
 // ==========================
-async function updateQuantity(productId, quantity) {
+function cambiarCantidad(index,cambio){
 
-  try {
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-    const response = await fetch("/api/cart/update", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("token")
-      },
-      body: JSON.stringify({ productId, quantity })
-    });
+cart[index].quantity += cambio;
 
-    if (response.ok) {
-      cargarCarrito();
-    }
-
-  } catch (err) {
-    console.error(err);
-  }
+if(cart[index].quantity <= 0){
+cart.splice(index,1);
 }
 
+localStorage.setItem("cart",JSON.stringify(cart));
+
+cargarCarrito();
+
+}
+
+
+// ==========================
+// ELIMINAR PRODUCTO
+// ==========================
+function eliminarProducto(index){
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+cart.splice(index,1);
+
+localStorage.setItem("cart",JSON.stringify(cart));
+
+cargarCarrito();
+
+}
+
+
+// ==========================
+// SIMULAR COMPRA
+// ==========================
+function simularCompra(){
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+if(cart.length === 0){
+alert("El carrito está vacío");
+return;
+}
+
+alert("Compra realizada con éxito 🎉");
+
+localStorage.removeItem("cart");
+
+cargarCarrito();
+
+}
 
 // ==========================
 // VACIAR CARRITO
 // ==========================
-const clearBtn = document.getElementById("clearCartBtn");
+const clearCartBtn = document.getElementById("clearCartBtn");
 
-if (clearBtn) {
+if(clearCartBtn){
 
-  clearBtn.addEventListener("click", async () => {
+clearCartBtn.addEventListener("click",()=>{
 
-    try {
+localStorage.removeItem("cart");
 
-      const response = await fetch("/api/cart/clear", {
-        method: "DELETE",
-        headers: {
-          "Authorization": "Bearer " + localStorage.getItem("token")
-        }
-      });
+cargarCarrito();
 
-      if (response.ok) {
-        cargarCarrito();
-      }
-
-    } catch (err) {
-      console.error(err);
-    }
-
-  });
+});
 
 }
 
 
 // ==========================
-// INICIAR TODO
+// INICIAR
 // ==========================
 cargarProductos();
 cargarCarrito();

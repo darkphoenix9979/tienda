@@ -242,3 +242,18 @@ body{
     transform: scale(1.05);
     background: linear-gradient(45deg,#0088ff,#003cff);
 }
+
+.cart-icon{
+color:white;
+font-size:18px;
+margin-right:20px;
+cursor:pointer;
+}
+
+#cartCount{
+background:red;
+padding:3px 8px;
+border-radius:50%;
+font-size:12px;
+margin-left:5px;
+}
