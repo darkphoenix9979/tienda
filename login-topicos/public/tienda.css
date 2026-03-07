@@ -258,20 +258,21 @@ font-size:12px;
 margin-left:5px;
 }
 
+/* ==========================
+IMAGEN CARRITO SIN DISTORSIÓN
+========================== */
+
 #carrito .card{
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:15px;
 }
 
 #carrito .card img{
-    width:70px;
-    height:70px;
+    width:80px;
+    height:80px;
     object-fit:contain;
     background:#111;
-    border-radius:6px;
-}
-
-#carrito .card-info{
-    font-size:14px;
+    border-radius:8px;
+    padding:5px;
 }
