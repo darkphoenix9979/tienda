@@ -257,3 +257,14 @@ border-radius:50%;
 font-size:12px;
 margin-left:5px;
 }
+
+/* ==========================
+IMAGENES DEL CARRITO
+========================== */
+
+#carrito .card img{
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
