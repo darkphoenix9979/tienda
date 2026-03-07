@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin - Anime Store</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <div class="container">
+    <h2>Agregar Producto</h2>
+
+    <form id="productForm">
+      <input type="text" id="name" placeholder="Nombre del producto" required>
+      <input type="number" id="price" placeholder="Precio" required>
+      <input type="file" id="image" accept="image/*" required>
+      <input type="number" id="stock" placeholder="Cantidad disponible" required>
+
+      <img id="preview" class="preview" />
+
+      <button type="submit">Crear Producto</button>
+    </form>
+
+    <div class="message" id="message"></div>
+
+    <h2 style="margin-top:40px;">Administrar Carrusel</h2>
+    <input type="file" id="carouselImage" accept="image/*">
+    <button onclick="subirImagenCarrusel()">Agregar al Carrusel</button>
+    <div id="carouselList" style="margin-top:20px;"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

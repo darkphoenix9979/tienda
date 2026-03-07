@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Anime Auth | Tienda</title>
+<link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="container">
+
+    <!-- LOGIN -->
+    <form id="loginForm" class="form active">
+        <h2>✨ Iniciar Sesión ✨</h2>
+
+        <div class="input-group">
+            <i>📧</i>
+            <input type="email" id="loginEmail" placeholder="Correo" required>
+        </div>
+
+        <div class="input-group">
+            <i>🔒</i>
+            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+            <span class="toggle-pass" onclick="togglePassword('loginPassword')">👁</span>
+        </div>
+
+        <button type="submit">Entrar</button>
+
+        <div class="switch" onclick="switchForm()">¿No tienes cuenta? Regístrate</div>
+    </form>
+
+    <!-- REGISTER -->
+    <div id="registerForm" class="form hidden">
+        <h2>🌸 Crear Cuenta 🌸</h2>
+
+        <div class="input-group">
+            <i>👤</i>
+            <input type="text" id="registerUsername" placeholder="Usuario">
+        </div>
+
+        <div class="input-group">
+            <i>📧</i>
+            <input type="email" id="registerEmail" placeholder="Correo">
+        </div>
+
+        <div class="input-group">
+            <i>🔒</i>
+            <input type="password" id="registerPassword" placeholder="Contraseña">
+            <span class="toggle-pass" onclick="togglePassword('registerPassword')">👁</span>
+        </div>
+
+        <button onclick="register()">Registrarse</button>
+
+        <div class="switch" onclick="switchForm()">¿Ya tienes cuenta? Inicia sesión</div>
+    </div>
+
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>

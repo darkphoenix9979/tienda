@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>AnimeStore</title>
+<link rel="stylesheet" href="tienda.css">
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="logo">AnimeStore</div>
+
+    <div class="nav-links">
+        <span>Inicio</span>
+        <span>Figuras</span>
+        <span>Mangas</span>
+        <span>Ropa</span>
+    </div>
+
+    <div class="user-menu" id="userMenu">
+        <div class="user-trigger">
+            <div class="avatar" id="avatar"></div>
+            <span id="usernameDisplay"></span>
+            <span class="arrow" id="arrow">▼</span>
+        </div>
+
+        <div class="dropdown" id="dropdown">
+            <div class="dropdown-item" onclick="logout()">Cerrar sesión</div>
+        </div>
+    </div>
+</div>
+
+<div class="card-info">
+  ${product.name}
+  <div>$${product.price}</div>
+  <div>Stock: ${product.stock}</div>
+</div>
+
+<!-- HERO -->
+<div class="hero" id="heroCarousel">
+    <div class="hero-overlay"></div>
+</div>
+
+<!-- SECCIÓN DINÁMICA -->
+<div class="section">
+    <h2>Productos</h2>
+    <div class="row" id="productos"></div>
+</div>
+
+<!-- SECCIÓN CARRITO -->
+<div class="section">
+    <h2>Mi Carrito</h2>
+    <div class="row" id="carrito"></div>
+    <div style="margin-top:15px;">
+        <button id="clearCartBtn">Vaciar Carrito</button>
+    </div>
+</div>
+
+<footer style="margin-top:60px; padding:30px; background:#111; text-align:center; color:#777;">
+    © 2026 AnimeStore - Todos los derechos reservados
+</footer>
+
+<script src="tienda.js"></script>
+</body>
+</html>

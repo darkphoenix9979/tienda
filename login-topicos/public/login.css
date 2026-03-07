@@ -1,0 +1,124 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0f0c29;
+    color:white;
+}
+
+#particles{
+    position:fixed;
+    width:100%;
+    height:100%;
+    top:0;
+    left:0;
+    z-index:-1;
+}
+
+/* Caja principal */
+.container{
+    width:420px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(20px);
+    border-radius:20px;
+    padding:40px;
+    box-shadow:0 0 40px rgba(0,0,0,0.6);
+    position:relative;
+    overflow:hidden;
+}
+
+h2{
+    text-align:center;
+    margin-bottom:20px;
+    text-shadow:0 0 15px #ff00cc;
+}
+
+/* Formularios */
+.form{
+    transition:0.5s;
+}
+
+.input-group{
+    position:relative;
+    margin-bottom:15px;
+}
+
+.input-group input{
+    width:100%;
+    padding:12px 40px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.2);
+    background:transparent;
+    color:white;
+    outline:none;
+    transition:0.3s;
+}
+
+.input-group input:focus{
+    border-color:#ff00cc;
+    box-shadow:0 0 10px #ff00cc;
+}
+
+.input-group i{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    left:12px;
+}
+
+.toggle-pass{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    cursor:pointer;
+}
+
+/* Botón */
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    background:linear-gradient(90deg,#ff00cc,#3333ff);
+    color:white;
+    transition:0.3s;
+}
+
+button:hover{
+    box-shadow:0 0 20px #ff00cc;
+    transform:translateY(-2px);
+}
+
+/* Switch */
+.switch{
+    text-align:center;
+    margin-top:15px;
+    cursor:pointer;
+    color:#00f2ff;
+}
+
+/* Animación */
+.hidden{
+    transform:translateX(100%);
+    opacity:0;
+    position:absolute;
+    width:100%;
+}
+
+.active{
+    transform:translateX(0);
+    opacity:1;
+    position:relative;
+}
