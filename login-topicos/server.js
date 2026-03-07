@@ -1,27 +1,63 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const path = require("path");
-require("dotenv").config();
+  const express = require("express");
+  const mongoose = require("mongoose");
+  const path = require("path");
+  const cors = require("cors");
+  require("dotenv").config();
 
-const app = express();
+  const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+  /* ==========================
+    MIDDLEWARE
+  ========================== */
 
-app.use(express.static(path.join(__dirname, "public")));
+  app.use(cors());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
-const productsRoutes = require("./routes/products");
-const authRoutes = require("./routes/auth");
-const carouselRoutes = require("./routes/carousel");
+  /* ==========================
+    ARCHIVOS ESTÁTICOS
+  ========================== */
 
-app.use("/api/products", productsRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/carousel", carouselRoutes);
+  app.use(express.static(path.join(__dirname, "public")));
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("Mongo conectado"))
-  .catch(err => console.log(err));
+  /* ==========================
+    RUTAS
+  ========================== */
 
-app.listen(3000, () => {
-  console.log("Servidor en puerto 3000");
-});
+  const productsRoutes = require("./routes/products");
+  const authRoutes = require("./routes/auth");
+  const carouselRoutes = require("./routes/carousel");
+
+  app.use("/api/products", productsRoutes);
+  app.use("/api/auth", authRoutes);
+  app.use("/api/carousel", carouselRoutes);
+
+  /* ==========================
+    CONEXIÓN A MONGODB
+  ========================== */
+
+  mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+      console.log("✅ MongoDB conectado correctamente");
+  })
+  .catch((err) => {
+      console.error("❌ Error conectando a MongoDB:", err);
+  });
+
+  /* ==========================
+    RUTA PRINCIPAL
+  ========================== */
+
+  app.get("/", (req, res) => {
+      res.sendFile(path.join(__dirname, "public", "tienda.html"));
+  });
+
+  /* ==========================
+    PUERTO DEL SERVIDOR
+  ========================== */
+
+  const PORT = process.env.PORT || 3000;
+
+  app.listen(PORT, () => {
+      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  });
