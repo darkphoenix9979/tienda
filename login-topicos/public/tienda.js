@@ -199,6 +199,75 @@ function addToCart(product) {
   cargarCarritoModal();
 }
 
+// ==========================
+// MOSTRAR CARRITO (SECCIÓN)
+// ==========================
+// ESTE CARRITO ES EL QUE APARECE ABAJO EN LA PÁGINA
+// Si decides usar solo el modal puedes eliminarlo después
+function cargarCarrito(){
+
+const contenedor = document.getElementById("carrito");
+const cartCount = document.getElementById("cartCount");
+
+if(!contenedor) return;
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+contenedor.innerHTML="";
+
+let total = 0;
+let totalItems = 0;
+
+cart.forEach((item,index)=>{
+
+total += item.price * item.quantity;
+totalItems += item.quantity;
+
+const card = document.createElement("div");
+card.classList.add("card");
+
+card.innerHTML = `
+<div class="cart-img">
+<img src="${item.image}">
+</div>
+
+<div class="card-info">
+
+<div class="product-name">${item.name}</div>
+
+<div class="price">$${item.price} MXN</div>
+
+<div class="quantity-control">
+<button onclick="cambiarCantidad(${index},-1)">-</button>
+<span>${item.quantity}</span>
+<button onclick="cambiarCantidad(${index},1)">+</button>
+</div>
+
+<button onclick="eliminarProducto(${index})">Eliminar</button>
+
+</div>
+`;
+
+contenedor.appendChild(card);
+
+});
+
+if(cartCount){
+cartCount.innerText = totalItems;
+}
+
+const totalHTML = document.createElement("div");
+
+totalHTML.innerHTML = `
+<h3>Total: $${total} MXN</h3>
+<button onclick="simularCompra()">Comprar</button>
+`;
+
+contenedor.appendChild(totalHTML);
+
+}
+
+
 
 // ==========================
 // MODAL DEL CARRITO
