@@ -1,110 +1,101 @@
 // ==========================
-// CARRUSEL
+// USUARIO / ESTADO DE SESION
 // ==========================
 
-async function cargarCarrusel(){
+const username = localStorage.getItem("username");
+const token = localStorage.getItem("token");
 
-const response = await fetch("/api/carousel");
+const usernameDisplay = document.getElementById("usernameDisplay");
+const avatar = document.getElementById("avatar");
+const dropdown = document.getElementById("dropdown");
 
-const images = await response.json();
+if(token && username){
 
-const hero = document.getElementById("heroCarousel");
+    usernameDisplay.innerText = username;
+    avatar.innerText = username.charAt(0).toUpperCase();
 
-images.forEach((item,index)=>{
+    dropdown.innerHTML = `
+    <button class="menu-btn" onclick="logout()">Cerrar sesión</button>
+    `;
 
-const img=document.createElement("img");
+}else{
 
-img.src=item.image;
+    usernameDisplay.innerText = "Invitado";
+    avatar.innerText = "?";
 
-if(index===0) img.classList.add("active");
+    dropdown.innerHTML = `
+    <button class="menu-btn" onclick="irLogin()">Iniciar sesión</button>
+    `;
+}
 
-hero.appendChild(img);
 
-});
+// ==========================
+// DROPDOWN USUARIO
+// ==========================
 
-let slides=document.querySelectorAll(".hero img");
+const userMenu = document.getElementById("userMenu");
+const arrow = document.getElementById("arrow");
 
-let i=0;
+if (userMenu) {
+  userMenu.addEventListener("click", () => {
 
-setInterval(()=>{
+    dropdown.classList.toggle("active");
 
-slides[i].classList.remove("active");
+    arrow.style.transform =
+      dropdown.classList.contains("active")
+      ? "rotate(180deg)"
+      : "rotate(0deg)";
 
-i=(i+1)%slides.length;
+  });
+}
 
-slides[i].classList.add("active");
 
-},5000);
+// ==========================
+// LOGOUT
+// ==========================
+
+function logout(){
+
+localStorage.removeItem("token");
+localStorage.removeItem("username");
+
+window.location.replace("tienda.html");
 
 }
 
-cargarCarrusel();
-
 
 // ==========================
-// CARGAR PRODUCTOS
+// IR A LOGIN
 // ==========================
 
-async function cargarProductos(){
+function irLogin(){
 
-const response=await fetch("/api/products");
-
-const products=await response.json();
-
-const contenedor=document.getElementById("productos");
-
-contenedor.innerHTML="";
-
-products.forEach(product=>{
-
-const card=document.createElement("div");
-
-card.classList.add("card");
-
-card.innerHTML=`
-
-<img src="${product.image}">
-
-<div class="card-info">
-
-<h3>${product.name}</h3>
-
-<div>$${product.price} MXN</div>
-
-<button onclick='addToCart(${JSON.stringify(product)})'>
-Agregar al carrito
-</button>
-
-</div>
-
-`;
-
-contenedor.appendChild(card);
-
-});
+window.location.href="login.html";
 
 }
 
-cargarProductos();
 
 
 // ==========================
 // CARRITO
 // ==========================
 
-const cartIcon=document.querySelector(".cart-icon");
+const cartIcon = document.querySelector(".cart-icon");
+const cartModal = document.getElementById("cartModal");
+const closeCart = document.getElementById("closeCart");
 
-const cartModal=document.getElementById("cartModal");
-
-const closeCart=document.getElementById("closeCart");
+if(cartIcon){
 
 cartIcon.addEventListener("click",()=>{
 
 cartModal.classList.add("active");
-
 cargarCarrito();
 
 });
+
+}
+
+if(closeCart){
 
 closeCart.addEventListener("click",()=>{
 
@@ -112,18 +103,20 @@ cartModal.classList.remove("active");
 
 });
 
+}
+
 
 // ==========================
-// AGREGAR
+// AGREGAR PRODUCTO
 // ==========================
 
 function addToCart(product){
 
-let cart=JSON.parse(localStorage.getItem("cart"))||[];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-const index=cart.findIndex(i=>i._id===product._id);
+const index = cart.findIndex(item=>item._id === product._id);
 
-if(index!==-1){
+if(index !== -1){
 
 cart[index].quantity++;
 
@@ -141,30 +134,36 @@ quantity:1
 
 localStorage.setItem("cart",JSON.stringify(cart));
 
-animarCarrito();
-
 actualizarContador();
+
+animarCarrito();
 
 cargarCarrito();
 
 }
 
 
+
 // ==========================
-// ANIMACION
+// ANIMACION CARRITO
 // ==========================
 
 function animarCarrito(){
 
-cartIcon.classList.add("cart-bounce");
+const icon = document.querySelector(".cart-icon");
+
+if(!icon) return;
+
+icon.classList.add("cart-bounce");
 
 setTimeout(()=>{
 
-cartIcon.classList.remove("cart-bounce");
+icon.classList.remove("cart-bounce");
 
 },400);
 
 }
+
 
 
 // ==========================
@@ -173,19 +172,22 @@ cartIcon.classList.remove("cart-bounce");
 
 function actualizarContador(){
 
-let cart=JSON.parse(localStorage.getItem("cart"))||[];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-let total=0;
+let total = 0;
 
-cart.forEach(i=>{
-
-total+=i.quantity;
-
+cart.forEach(item=>{
+total += item.quantity;
 });
 
-document.getElementById("cartCount").innerText=total;
+const contador = document.getElementById("cartCount");
+
+if(contador){
+contador.innerText = total;
+}
 
 }
+
 
 
 // ==========================
@@ -194,11 +196,12 @@ document.getElementById("cartCount").innerText=total;
 
 function cargarCarrito(){
 
-let cart=JSON.parse(localStorage.getItem("cart"))||[];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-const contenedor=document.getElementById("cartItems");
+const contenedor = document.getElementById("cartItems");
+const totalText = document.getElementById("cartTotal");
 
-const totalText=document.getElementById("cartTotal");
+if(!contenedor) return;
 
 contenedor.innerHTML="";
 
@@ -206,9 +209,9 @@ let total=0;
 
 cart.forEach((item,index)=>{
 
-total+=item.price*item.quantity;
+total += item.price * item.quantity;
 
-const div=document.createElement("div");
+const div = document.createElement("div");
 
 div.classList.add("cart-item");
 
@@ -218,7 +221,7 @@ div.innerHTML=`
 
 <div class="cart-info">
 
-${item.name}
+<strong>${item.name}</strong>
 
 <div>$${item.price} MXN</div>
 
@@ -240,22 +243,29 @@ contenedor.appendChild(div);
 
 });
 
+if(totalText){
+
 totalText.innerText="Total: $"+total+" MXN";
 
 }
 
+actualizarContador();
+
+}
+
+
 
 // ==========================
-// CANTIDAD
+// CAMBIAR CANTIDAD
 // ==========================
 
 function cambiarCantidad(index,cambio){
 
-let cart=JSON.parse(localStorage.getItem("cart"))||[];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-cart[index].quantity+=cambio;
+cart[index].quantity += cambio;
 
-if(cart[index].quantity<=0){
+if(cart[index].quantity <=0){
 
 cart.splice(index,1);
 
@@ -265,13 +275,12 @@ localStorage.setItem("cart",JSON.stringify(cart));
 
 cargarCarrito();
 
-actualizarContador();
-
 }
 
 
+
 // ==========================
-// VACIAR
+// VACIAR CARRITO
 // ==========================
 
 function vaciarCarrito(){
@@ -280,20 +289,19 @@ localStorage.removeItem("cart");
 
 cargarCarrito();
 
-actualizarContador();
-
 }
 
 
+
 // ==========================
-// COMPRA
+// COMPRA SIMULADA
 // ==========================
 
 function simularCompra(){
 
-let cart=JSON.parse(localStorage.getItem("cart"))||[];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-if(cart.length===0){
+if(cart.length === 0){
 
 alert("El carrito está vacío");
 
@@ -301,19 +309,18 @@ return;
 
 }
 
-alert("Compra realizada 🎉");
+alert("Compra realizada con éxito 🎉");
 
 localStorage.removeItem("cart");
 
 cargarCarrito();
 
-actualizarContador();
-
 }
 
 
+
 // ==========================
-// INICIAR
+// INICIAR CONTADOR
 // ==========================
 
 actualizarContador();
