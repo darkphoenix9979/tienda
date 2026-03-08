@@ -154,6 +154,7 @@ body{
     display:none;
 }
 
+/* TARJETAS PRODUCTOS */
 .card{
     position:relative;
     min-width:180px;
@@ -190,7 +191,12 @@ body{
     margin-top:5px;
 }
 
-/* Carrito */
+/* ==========================
+CARRITO ANTIGUO (YA NO MUY USADO)
+Se dejó comentado porque ahora usas el carrito limpio
+========================== */
+
+/*
 #carrito .card{
     min-width:200px;
     height:auto;
@@ -206,6 +212,7 @@ body{
     align-items:center;
     margin-top:5px;
 }
+*/
 
 #carrito button{
     background:#ff6a00;
@@ -259,7 +266,7 @@ margin-left:5px;
 }
 
 /* ==========================
-CARRITO LIMPIO
+CARRITO LIMPIO (ACTUAL)
 ========================== */
 
 #carrito .card{
@@ -269,9 +276,9 @@ gap:15px;
 background:#111;
 padding:10px;
 border-radius:10px;
+height:auto;
 }
 
-/* contenedor imagen */
 .cart-img{
 width:80px;
 height:80px;
@@ -283,17 +290,17 @@ border-radius:8px;
 overflow:hidden;
 }
 
-/* imagen */
 .cart-img img{
 width:100%;
 height:100%;
 object-fit:contain;
 }
 
-/* info */
 #carrito .card-info{
 flex:1;
 color:white;
+position:static; /* evita conflicto con el card-info original */
+background:none;
 }
 
 .quantity-control{
@@ -301,4 +308,62 @@ display:flex;
 gap:8px;
 align-items:center;
 margin-top:5px;
+}
+
+/* ==========================
+MODAL CARRITO
+========================== */
+
+.cart-modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:1000;
+}
+
+.cart-content{
+background:#111;
+width:400px;
+max-height:80vh;
+overflow-y:auto;
+padding:20px;
+border-radius:10px;
+color:white;
+}
+
+.cart-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+#closeCart{
+cursor:pointer;
+font-size:20px;
+}
+
+.cart-item{
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:15px;
+}
+
+.cart-item img{
+width:60px;
+height:60px;
+object-fit:contain;
+background:#1a1a1a;
+border-radius:5px;
+}
+
+.cart-footer{
+margin-top:20px;
 }

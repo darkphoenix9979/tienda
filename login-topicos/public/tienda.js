@@ -13,6 +13,9 @@
 // ==========================
 // CARRUSEL
 // ==========================
+// ==========================
+// CARRUSEL
+// ==========================
 async function cargarCarrusel() {
   try {
     const response = await fetch("/api/carousel");
@@ -46,6 +49,7 @@ function iniciarCarrusel() {
 }
 
 cargarCarrusel();
+
 
 // ==========================
 // CARGAR PRODUCTOS
@@ -106,7 +110,6 @@ const usernameDisplay = document.getElementById("usernameDisplay");
 const avatar = document.getElementById("avatar");
 const dropdown = document.getElementById("dropdown");
 
-// Si hay sesión iniciada
 if(token && username){
 
     usernameDisplay.innerText = username;
@@ -118,7 +121,6 @@ if(token && username){
 
 }else{
 
-    // Usuario invitado
     usernameDisplay.innerText = "Invitado";
     avatar.innerText = "?";
 
@@ -126,6 +128,7 @@ if(token && username){
     <button class="menu-btn" onclick="irLogin()">Iniciar sesión</button>
     `;
 }
+
 
 // ==========================
 // DROPDOWN USUARIO
@@ -160,6 +163,7 @@ function irLogin() {
   window.location.href = "login.html";
 }
 
+
 // ==========================
 // AGREGAR AL CARRITO
 // ==========================
@@ -192,12 +196,15 @@ function addToCart(product) {
   alert("Producto agregado al carrito 🛒");
 
   cargarCarrito();
+  cargarCarritoModal();
 }
 
 
 // ==========================
-// MOSTRAR CARRITO
+// MOSTRAR CARRITO (SECCIÓN)
 // ==========================
+// ESTE CARRITO ES EL QUE APARECE ABAJO EN LA PÁGINA
+// Si decides usar solo el modal puedes eliminarlo después
 function cargarCarrito(){
 
 const contenedor = document.getElementById("carrito");
@@ -263,6 +270,91 @@ contenedor.appendChild(totalHTML);
 
 
 // ==========================
+// MODAL DEL CARRITO
+// ==========================
+const cartIcon = document.querySelector(".cart-icon");
+const cartModal = document.getElementById("cartModal");
+const closeCart = document.getElementById("closeCart");
+
+if(cartIcon && cartModal){
+
+cartIcon.addEventListener("click", () => {
+
+cartModal.style.display = "flex";
+cargarCarritoModal();
+
+});
+
+}
+
+if(closeCart){
+
+closeCart.addEventListener("click", () => {
+
+cartModal.style.display = "none";
+
+});
+
+}
+
+
+function cargarCarritoModal(){
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+const contenedor = document.getElementById("cartItems");
+const totalText = document.getElementById("cartTotal");
+
+if(!contenedor) return;
+
+contenedor.innerHTML = "";
+
+let total = 0;
+
+cart.forEach((item,index)=>{
+
+total += item.price * item.quantity;
+
+const div = document.createElement("div");
+
+div.classList.add("cart-item");
+
+div.innerHTML = `
+
+<img src="${item.image}">
+
+<div>
+
+${item.name}
+
+<div>$${item.price} MXN</div>
+
+<div>
+
+<button onclick="cambiarCantidad(${index},-1)">-</button>
+
+${item.quantity}
+
+<button onclick="cambiarCantidad(${index},1)">+</button>
+
+</div>
+
+</div>
+
+`;
+
+contenedor.appendChild(div);
+
+});
+
+if(totalText){
+totalText.innerText = "Total: $" + total + " MXN";
+}
+
+}
+
+
+// ==========================
 // CAMBIAR CANTIDAD
 // ==========================
 function cambiarCantidad(index,cambio){
@@ -278,6 +370,7 @@ cart.splice(index,1);
 localStorage.setItem("cart",JSON.stringify(cart));
 
 cargarCarrito();
+cargarCarritoModal();
 
 }
 
@@ -294,6 +387,7 @@ cart.splice(index,1);
 localStorage.setItem("cart",JSON.stringify(cart));
 
 cargarCarrito();
+cargarCarritoModal();
 
 }
 
@@ -315,8 +409,10 @@ alert("Compra realizada con éxito 🎉");
 localStorage.removeItem("cart");
 
 cargarCarrito();
+cargarCarritoModal();
 
 }
+
 
 // ==========================
 // VACIAR CARRITO
@@ -330,6 +426,7 @@ clearCartBtn.addEventListener("click",()=>{
 localStorage.removeItem("cart");
 
 cargarCarrito();
+cargarCarritoModal();
 
 });
 
@@ -341,3 +438,4 @@ cargarCarrito();
 // ==========================
 cargarProductos();
 cargarCarrito();
+cargarCarritoModal();
