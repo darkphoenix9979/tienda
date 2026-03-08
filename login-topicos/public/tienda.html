@@ -8,62 +8,77 @@
 
 <body>
 
-<header>
+<div class="navbar">
+    <div class="logo">AnimeStore</div>
 
-<h1>AnimeStore</h1>
+    <div class="nav-links">
+        <span>Inicio</span>
+        <span>Figuras</span>
+        <span>Mangas</span>
+        <span>Ropa</span>
+    </div>
 
-<input type="text" id="searchInput" placeholder="Buscar producto...">
+    <div class="user-menu" id="userMenu">
+        <div class="user-trigger">
+            <div class="avatar" id="avatar"></div>
+            <span id="usernameDisplay"></span>
+            <span class="arrow" id="arrow">▼</span>
+        </div>
 
-<div class="right-menu">
+        <div class="dropdown" id="dropdown">
+            <div class="dropdown-item" onclick="logout()">Cerrar sesión</div>
+        </div>
+    </div>
 
-<div class="cart-icon" id="cartIcon">
-🛒 <span id="cartCount">0</span>
-</div>
-
-<div class="user-menu" id="userMenu">
-
-<div class="avatar" id="avatar">?</div>
-<span id="usernameDisplay">Invitado</span>
-
-<div class="dropdown" id="dropdown"></div>
-
-</div>
-
-</div>
-
-</header>
-
-<section id="productsContainer" class="products"></section>
-
-
-<!-- CARRITO -->
-
+    <div class="cart-icon">
+        🛒 <span id="cartCount">0</span>
+    </div>
+    <!-- MODAL CARRITO -->
 <div id="cartModal" class="cart-modal">
 
-<div class="cart-panel">
+    <div class="cart-content">
 
-<div class="cart-header">
-<h2>Mi carrito</h2>
-<span id="closeCart">✕</span>
-</div>
+        <div class="cart-header">
+            <h2>Mi Carrito</h2>
+            <span id="closeCart">✖</span>
+        </div>
 
-<div id="cartItems"></div>
+        <div id="cartItems"></div>
 
-<div class="cart-footer">
+        <div class="cart-footer">
+            <h3 id="cartTotal">Total: $0 MXN</h3>
+            <button onclick="simularCompra()">Comprar</button>
+        </div>
 
-<h3 id="cartTotal">Total: $0</h3>
-
-<button class="btn" onclick="vaciarCarrito()">Vaciar</button>
-<button class="btn buy" onclick="simularCompra()">Comprar</button>
-
-</div>
+    </div>
 
 </div>
-
 </div>
 
+<!-- HERO -->
+<div class="hero" id="heroCarousel">
+    <div class="hero-overlay"></div>
+</div>
+
+<!-- SECCIÓN DINÁMICA -->
+<div class="section">
+    <h2>Productos</h2>
+    <div class="row" id="productos"></div>
+</div>
+
+<!-- SECCIÓN CARRITO -->
+<div class="section">
+    <h2>Mi Carrito</h2>
+    <div class="row" id="carrito"></div>
+    <div style="margin-top:15px;">
+        <button id="clearCartBtn">Vaciar Carrito</button>
+    </div>
+</div>
+
+<footer style="margin-top:60px; padding:30px; background:#111; text-align:center; color:#777;">
+    © 2026 AnimeStore - Todos los derechos reservados
+</footer>
 
 <script src="tienda.js"></script>
-
 </body>
 </html>
