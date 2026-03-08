@@ -1,326 +1,295 @@
-// ==========================
-// USUARIO / ESTADO DE SESION
-// ==========================
+document.addEventListener("DOMContentLoaded",()=>{
 
-const username = localStorage.getItem("username");
-const token = localStorage.getItem("token");
+/* LOGIN */
 
-const usernameDisplay = document.getElementById("usernameDisplay");
-const avatar = document.getElementById("avatar");
-const dropdown = document.getElementById("dropdown");
+const username = localStorage.getItem("username")
+const token = localStorage.getItem("token")
+
+const usernameDisplay = document.getElementById("usernameDisplay")
+const avatar = document.getElementById("avatar")
+const dropdown = document.getElementById("dropdown")
 
 if(token && username){
 
-    usernameDisplay.innerText = username;
-    avatar.innerText = username.charAt(0).toUpperCase();
+usernameDisplay.innerText=username
+avatar.innerText=username[0].toUpperCase()
 
-    dropdown.innerHTML = `
-    <button class="menu-btn" onclick="logout()">Cerrar sesión</button>
-    `;
+dropdown.innerHTML=`<button class="menu-btn" onclick="logout()">Cerrar sesión</button>`
 
 }else{
 
-    usernameDisplay.innerText = "Invitado";
-    avatar.innerText = "?";
+dropdown.innerHTML=`<button class="menu-btn" onclick="login()">Iniciar sesión</button>`
 
-    dropdown.innerHTML = `
-    <button class="menu-btn" onclick="irLogin()">Iniciar sesión</button>
-    `;
+}
+
+/* USER MENU */
+
+document.getElementById("userMenu").onclick=()=>{
+
+dropdown.classList.toggle("active")
+
 }
 
 
-// ==========================
-// DROPDOWN USUARIO
-// ==========================
+/* PRODUCTOS */
 
-const userMenu = document.getElementById("userMenu");
-const arrow = document.getElementById("arrow");
+const productos=[
 
-if (userMenu) {
-  userMenu.addEventListener("click", () => {
+{_id:1,name:"Figura Naruto",price:500,image:"https://i.imgur.com/1.png",rating:5},
+{_id:2,name:"Katana Zoro",price:900,image:"https://i.imgur.com/2.png",rating:4},
+{_id:3,name:"Figura Goku",price:700,image:"https://i.imgur.com/3.png",rating:5},
+{_id:4,name:"Figura Luffy",price:650,image:"https://i.imgur.com/4.png",rating:4}
 
-    dropdown.classList.toggle("active");
+]
 
-    arrow.style.transform =
-      dropdown.classList.contains("active")
-      ? "rotate(180deg)"
-      : "rotate(0deg)";
+mostrarProductos(productos)
 
-  });
+
+/* BUSCADOR */
+
+document.getElementById("searchInput").addEventListener("input",e=>{
+
+const texto=e.target.value.toLowerCase()
+
+const filtrados=productos.filter(p=>
+p.name.toLowerCase().includes(texto)
+)
+
+mostrarProductos(filtrados)
+
+})
+
+
+actualizarContador()
+
+})
+
+
+/* MOSTRAR PRODUCTOS */
+
+function mostrarProductos(lista){
+
+const cont=document.getElementById("productsContainer")
+
+cont.innerHTML=""
+
+lista.forEach(p=>{
+
+const div=document.createElement("div")
+
+div.className="product"
+
+div.innerHTML=`
+
+<img src="${p.image}">
+
+<h3>${p.name}</h3>
+
+<div class="rating">${"⭐".repeat(p.rating)}</div>
+
+<p>$${p.price}</p>
+
+<button class="add-btn" onclick='addToCart(${JSON.stringify(p)})'>
+Agregar
+</button>
+
+`
+
+cont.appendChild(div)
+
+})
+
 }
 
 
-// ==========================
-// LOGOUT
-// ==========================
+/* LOGIN SIMPLE */
+
+function login(){
+
+const name=prompt("Ingresa tu nombre")
+
+if(name){
+
+localStorage.setItem("username",name)
+localStorage.setItem("token","123")
+
+location.reload()
+
+}
+
+}
 
 function logout(){
 
-localStorage.removeItem("token");
-localStorage.removeItem("username");
-
-window.location.replace("tienda.html");
+localStorage.clear()
+location.reload()
 
 }
 
 
-// ==========================
-// IR A LOGIN
-// ==========================
-
-function irLogin(){
-
-window.location.href="login.html";
-
-}
-
-
-
-// ==========================
-// CARRITO
-// ==========================
-
-const cartIcon = document.querySelector(".cart-icon");
-const cartModal = document.getElementById("cartModal");
-const closeCart = document.getElementById("closeCart");
-
-if(cartIcon){
-
-cartIcon.addEventListener("click",()=>{
-
-cartModal.classList.add("active");
-cargarCarrito();
-
-});
-
-}
-
-if(closeCart){
-
-closeCart.addEventListener("click",()=>{
-
-cartModal.classList.remove("active");
-
-});
-
-}
-
-
-// ==========================
-// AGREGAR PRODUCTO
-// ==========================
+/* CARRITO */
 
 function addToCart(product){
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let cart=JSON.parse(localStorage.getItem("cart"))||[]
 
-const index = cart.findIndex(item=>item._id === product._id);
+const index=cart.findIndex(i=>i._id===product._id)
 
-if(index !== -1){
+if(index!=-1){
 
-cart[index].quantity++;
+cart[index].quantity++
 
 }else{
 
-cart.push({
-_id:product._id,
-name:product.name,
-price:product.price,
-image:product.image,
-quantity:1
-});
+product.quantity=1
+cart.push(product)
 
 }
 
-localStorage.setItem("cart",JSON.stringify(cart));
+localStorage.setItem("cart",JSON.stringify(cart))
 
-actualizarContador();
-
-animarCarrito();
-
-cargarCarrito();
+animarCarrito()
+actualizarContador()
 
 }
 
-
-
-// ==========================
-// ANIMACION CARRITO
-// ==========================
-
-function animarCarrito(){
-
-const icon = document.querySelector(".cart-icon");
-
-if(!icon) return;
-
-icon.classList.add("cart-bounce");
-
-setTimeout(()=>{
-
-icon.classList.remove("cart-bounce");
-
-},400);
-
-}
-
-
-
-// ==========================
-// CONTADOR
-// ==========================
 
 function actualizarContador(){
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let cart=JSON.parse(localStorage.getItem("cart"))||[]
 
-let total = 0;
+let total=0
 
-cart.forEach(item=>{
-total += item.quantity;
-});
+cart.forEach(i=>total+=i.quantity)
 
-const contador = document.getElementById("cartCount");
-
-if(contador){
-contador.innerText = total;
-}
+document.getElementById("cartCount").innerText=total
 
 }
 
 
+/* ANIMACION */
 
-// ==========================
-// MOSTRAR CARRITO
-// ==========================
+function animarCarrito(){
+
+const icon=document.getElementById("cartIcon")
+
+icon.classList.add("bounce")
+
+setTimeout(()=>icon.classList.remove("bounce"),400)
+
+}
+
+
+/* ABRIR CARRITO */
+
+document.addEventListener("click",e=>{
+
+if(e.target.id==="cartIcon"){
+
+document.getElementById("cartModal").classList.add("active")
+cargarCarrito()
+
+}
+
+if(e.target.id==="closeCart"){
+
+document.getElementById("cartModal").classList.remove("active")
+
+}
+
+})
+
+
+/* MOSTRAR CARRITO */
 
 function cargarCarrito(){
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let cart=JSON.parse(localStorage.getItem("cart"))||[]
 
-const contenedor = document.getElementById("cartItems");
-const totalText = document.getElementById("cartTotal");
+const cont=document.getElementById("cartItems")
 
-if(!contenedor) return;
+cont.innerHTML=""
 
-contenedor.innerHTML="";
-
-let total=0;
+let total=0
 
 cart.forEach((item,index)=>{
 
-total += item.price * item.quantity;
+total+=item.price*item.quantity
 
-const div = document.createElement("div");
+const div=document.createElement("div")
 
-div.classList.add("cart-item");
+div.className="cart-item"
 
 div.innerHTML=`
 
 <img src="${item.image}">
 
-<div class="cart-info">
+<div>
 
-<strong>${item.name}</strong>
+${item.name}
 
-<div>$${item.price} MXN</div>
+<div>$${item.price}</div>
 
-<div class="quantity">
+<div class="qty">
 
-<button class="qty-btn" onclick="cambiarCantidad(${index},-1)">-</button>
-
-<span>${item.quantity}</span>
-
-<button class="qty-btn" onclick="cambiarCantidad(${index},1)">+</button>
+<button onclick="cambiarCantidad(${index},-1)">-</button>
+${item.quantity}
+<button onclick="cambiarCantidad(${index},1)">+</button>
 
 </div>
 
 </div>
 
-`;
+`
 
-contenedor.appendChild(div);
+cont.appendChild(div)
 
-});
+})
 
-if(totalText){
-
-totalText.innerText="Total: $"+total+" MXN";
-
-}
-
-actualizarContador();
+document.getElementById("cartTotal").innerText="Total: $"+total
 
 }
 
 
-
-// ==========================
-// CAMBIAR CANTIDAD
-// ==========================
+/* CANTIDAD */
 
 function cambiarCantidad(index,cambio){
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let cart=JSON.parse(localStorage.getItem("cart"))||[]
 
-cart[index].quantity += cambio;
+cart[index].quantity+=cambio
 
-if(cart[index].quantity <=0){
+if(cart[index].quantity<=0) cart.splice(index,1)
 
-cart.splice(index,1);
+localStorage.setItem("cart",JSON.stringify(cart))
 
-}
-
-localStorage.setItem("cart",JSON.stringify(cart));
-
-cargarCarrito();
+cargarCarrito()
+actualizarContador()
 
 }
 
 
-
-// ==========================
-// VACIAR CARRITO
-// ==========================
+/* VACIAR */
 
 function vaciarCarrito(){
 
-localStorage.removeItem("cart");
+localStorage.removeItem("cart")
 
-cargarCarrito();
+cargarCarrito()
+actualizarContador()
 
 }
 
 
-
-// ==========================
-// COMPRA SIMULADA
-// ==========================
+/* COMPRA */
 
 function simularCompra(){
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+alert("Compra realizada 🎉")
 
-if(cart.length === 0){
+localStorage.removeItem("cart")
 
-alert("El carrito está vacío");
-
-return;
-
-}
-
-alert("Compra realizada con éxito 🎉");
-
-localStorage.removeItem("cart");
-
-cargarCarrito();
+cargarCarrito()
+actualizarContador()
 
 }
-
-
-
-// ==========================
-// INICIAR CONTADOR
-// ==========================
-
-actualizarContador();
