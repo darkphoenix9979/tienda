@@ -10,5 +10,13 @@
 {
 "question":"comprar producto",
 "answer":"Selecciona un producto y agrégalo al carrito."
+},
+{
+"question":"metodos de pago",
+"answer":"Aceptamos tarjeta, PayPal y transferencia."
+},
+{
+"question":"envios",
+"answer":"Los envíos tardan entre 3 y 5 días."
 }
 ]
