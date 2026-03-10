@@ -33,13 +33,19 @@ app.use("/api/products", productsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/carousel", carouselRoutes);
 
-// Ruta para guardar preguntas desconocidas (del primer código)
+// Ruta para guardar preguntas desconocidas (Fusionada)
 app.post("/save_question", (req, res) => {
     const question = req.body.question;
     let data = [];
     
     if (fs.existsSync("unknown_questions.json")) {
-        data = JSON.parse(fs.readFileSync("unknown_questions.json"));
+        try {
+            const fileContent = fs.readFileSync("unknown_questions.json");
+            data = JSON.parse(fileContent);
+        } catch (error) {
+            console.error("Error al leer el archivo JSON:", error);
+            data = [];
+        }
     }
     
     data.push(question);
