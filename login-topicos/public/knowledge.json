@@ -1,0 +1,21 @@
+[
+{
+"question":"como crear cuenta",
+"answer":"Para crear una cuenta debes ir a la sección de registro y llenar el formulario."
+},
+
+{
+"question":"como iniciar sesion",
+"answer":"Debes ingresar tu correo y contraseña en la página de inicio de sesión."
+},
+
+{
+"question":"olvide mi contraseña",
+"answer":"Puedes recuperar tu contraseña desde la opción 'Olvidé mi contraseña'."
+},
+
+{
+"question":"como comprar",
+"answer":"Selecciona el producto, agrégalo al carrito y finaliza la compra."
+}
+]
