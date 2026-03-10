@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 let knowledge = [];
 let fuse;
 
@@ -9,12 +11,12 @@ fetch("/knowledge.json")
 
 knowledge = data;
 
-console.log("knowledge cargado:", knowledge);
-
 fuse = new Fuse(knowledge,{
 keys:["question"],
 threshold:0.4
 });
+
+console.log("knowledge cargado");
 
 })
 .catch(err=>{
@@ -37,7 +39,7 @@ chatContainer.classList.remove("active");
 
 /* enviar mensaje */
 
-function sendMessage(){
+window.sendMessage = function(){
 
 let input = document.getElementById("userInput").value.toLowerCase();
 
@@ -91,8 +93,6 @@ return "El asistente aún está cargando...";
 
 let result = fuse.search(input);
 
-console.log("resultado:", result);
-
 if(result.length > 0){
 return result[0].item.answer;
 }
@@ -100,3 +100,5 @@ return result[0].item.answer;
 return "No tengo respuesta para eso todavía.";
 
 }
+
+});
