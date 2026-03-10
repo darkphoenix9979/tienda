@@ -1,5 +1,23 @@
 console.log("CHATBOT FUNCIONANDO");
 
+let knowledge = [];
+let fuse;
+
+/* cargar conocimiento */
+fetch("knowledge.json")
+.then(res => res.json())
+.then(data => {
+knowledge = data;
+fuse = new Fuse(knowledge,{
+keys:["question"],
+threshold:0.4
+});
+console.log("Knowledge cargado:", knowledge);
+})
+.catch(err=>{
+console.error("Error cargando knowledge:",err);
+});
+
 document.addEventListener("DOMContentLoaded", () => {
 
 const chatButton = document.getElementById("chatButton");
