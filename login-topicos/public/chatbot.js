@@ -1,9 +1,9 @@
 let knowledge = [];
 let fuse;
 
-/* Cargar base de conocimiento */
+/* cargar conocimiento */
 
-fetch("knowledge.json")
+fetch("/knowledge.json")
 .then(res => res.json())
 .then(data => {
 
@@ -14,9 +14,12 @@ keys:["question"],
 threshold:0.4
 });
 
+})
+.catch(err=>{
+console.error("Error cargando knowledge:",err);
 });
 
-/* Botón flotante */
+/* botones */
 
 const chatButton = document.getElementById("chatButton");
 const chatContainer = document.getElementById("chatContainer");
@@ -30,7 +33,7 @@ closeChat.onclick = () =>{
 chatContainer.classList.remove("active");
 }
 
-/* Enviar mensaje */
+/* enviar mensaje */
 
 function sendMessage(){
 
@@ -50,7 +53,7 @@ document.getElementById("userInput").value="";
 
 }
 
-/* Mostrar mensaje */
+/* mostrar mensajes */
 
 function addMessage(text,type){
 
@@ -68,38 +71,20 @@ chatbox.scrollTop = chatbox.scrollHeight;
 
 }
 
-/* Buscar respuesta */
+/* buscar respuesta */
 
 function findResponse(input){
+
+if(!fuse){
+return "El asistente aún está cargando...";
+}
 
 let result = fuse.search(input);
 
 if(result.length > 0){
-
 return result[0].item.answer;
-
 }
 
-saveUnknownQuestion(input);
-
-return "No tengo una respuesta para eso todavía, pero guardaré tu pregunta para mejorar el sistema.";
-
-}
-
-/* Guardar preguntas desconocidas */
-
-function saveUnknownQuestion(question){
-
-fetch("/save_question",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({question:question})
-
-});
+return "No tengo respuesta para eso todavía.";
 
 }
