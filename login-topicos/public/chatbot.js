@@ -1,11 +1,12 @@
 console.log("CHATBOT FUNCIONANDO");
 
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", () => {
 
 const chatButton = document.getElementById("chatButton");
 const chatContainer = document.getElementById("chatContainer");
 const closeChat = document.getElementById("closeChat");
 const userInput = document.getElementById("userInput");
+const sendBtn = document.querySelector(".chat-input button");
 const chatbox = document.getElementById("chatbox");
 
 /* abrir chat */
@@ -22,7 +23,7 @@ closeChat.addEventListener("click", () => {
 
 /* enviar mensaje */
 
-window.sendMessage = function(){
+function sendMessage(){
 
 let text = userInput.value.trim().toLowerCase();
 
@@ -30,14 +31,14 @@ if(text === "") return;
 
 chatbox.innerHTML += `<div><b>Tú:</b> ${text}</div>`;
 
-let response = "No entendí la pregunta.";
+let response = "No entendí tu pregunta.";
 
 if(text.includes("crear cuenta")){
 response = "Para crear una cuenta ve a la página de registro.";
 }
 
 if(text.includes("iniciar sesion")){
-response = "Ingresa tu correo y contraseña en la página de login.";
+response = "Debes ingresar tu correo y contraseña.";
 }
 
 if(text.includes("comprar")){
@@ -52,9 +53,13 @@ userInput.value = "";
 
 }
 
-/* enviar con ENTER */
+/* botón enviar */
 
-userInput.addEventListener("keypress",function(e){
+sendBtn.addEventListener("click", sendMessage);
+
+/* ENTER */
+
+userInput.addEventListener("keypress", (e)=>{
 if(e.key === "Enter"){
 sendMessage();
 }
