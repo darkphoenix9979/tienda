@@ -1,51 +1,39 @@
-console.log("CHATBOT CARGADO");
+console.log("CHATBOT FUNCIONANDO");
 
 const chatButton = document.getElementById("chatButton");
 const chatContainer = document.getElementById("chatContainer");
 const closeChat = document.getElementById("closeChat");
 
-chatButton.addEventListener("click", () => {
+chatButton.onclick = () => {
     chatContainer.classList.toggle("active");
-});
+};
 
-closeChat.addEventListener("click", () => {
+closeChat.onclick = () => {
     chatContainer.classList.remove("active");
-});
+};
 
 function sendMessage(){
 
     const input = document.getElementById("userInput");
     const chatbox = document.getElementById("chatbox");
 
-    let text = input.value.toLowerCase();
+    let text = input.value;
 
     if(text === "") return;
 
-    chatbox.innerHTML += "<div><b>Tú:</b> "+text+"</div>";
+    chatbox.innerHTML += "<p><b>Tú:</b> "+text+"</p>";
 
-    let response = "No entendí tu pregunta.";
+    let response = "No entendí la pregunta.";
 
-    if(text.includes("crear cuenta")){
-        response = "Para crear una cuenta ve a la página de registro.";
+    if(text.toLowerCase().includes("crear cuenta")){
+        response = "Para crear una cuenta debes ir al registro.";
     }
 
-    if(text.includes("iniciar sesion")){
-        response = "Debes ingresar tu correo y contraseña.";
+    if(text.toLowerCase().includes("comprar")){
+        response = "Solo agrega productos al carrito y presiona comprar.";
     }
 
-    if(text.includes("comprar")){
-        response = "Selecciona un producto y agrégalo al carrito.";
-    }
+    chatbox.innerHTML += "<p><b>Bot:</b> "+response+"</p>";
 
-    chatbox.innerHTML += "<div><b>Bot:</b> "+response+"</div>";
-
-    chatbox.scrollTop = chatbox.scrollHeight;
-
-    input.value = "";
+    input.value="";
 }
-
-document.getElementById("userInput").addEventListener("keypress",function(e){
-    if(e.key === "Enter"){
-        sendMessage();
-    }
-});
