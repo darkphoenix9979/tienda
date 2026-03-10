@@ -9,6 +9,8 @@ fetch("/knowledge.json")
 
 knowledge = data;
 
+console.log("knowledge cargado:", knowledge);
+
 fuse = new Fuse(knowledge,{
 keys:["question"],
 threshold:0.4
@@ -53,6 +55,14 @@ document.getElementById("userInput").value="";
 
 }
 
+/* enter para enviar */
+
+document.getElementById("userInput").addEventListener("keypress", function(e){
+if(e.key === "Enter"){
+sendMessage();
+}
+});
+
 /* mostrar mensajes */
 
 function addMessage(text,type){
@@ -80,6 +90,8 @@ return "El asistente aún está cargando...";
 }
 
 let result = fuse.search(input);
+
+console.log("resultado:", result);
 
 if(result.length > 0){
 return result[0].item.answer;
