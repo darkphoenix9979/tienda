@@ -1,104 +1,51 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-let knowledge = [];
-let fuse;
-
-/* cargar conocimiento */
-
-fetch("/knowledge.json")
-.then(res => res.json())
-.then(data => {
-
-knowledge = data;
-
-fuse = new Fuse(knowledge,{
-keys:["question"],
-threshold:0.4
-});
-
-console.log("knowledge cargado");
-
-})
-.catch(err=>{
-console.error("Error cargando knowledge:",err);
-});
-
-/* botones */
+console.log("CHATBOT CARGADO");
 
 const chatButton = document.getElementById("chatButton");
 const chatContainer = document.getElementById("chatContainer");
 const closeChat = document.getElementById("closeChat");
 
-chatButton.onclick = () =>{
-chatContainer.classList.toggle("active");
-}
-
-closeChat.onclick = () =>{
-chatContainer.classList.remove("active");
-}
-
-/* enviar mensaje */
-
-window.sendMessage = function(){
-
-let input = document.getElementById("userInput").value.toLowerCase();
-
-if(input === "") return;
-
-addMessage(input,"user");
-
-let response = findResponse(input);
-
-setTimeout(()=>{
-addMessage(response,"bot");
-},400);
-
-document.getElementById("userInput").value="";
-
-}
-
-/* enter para enviar */
-
-document.getElementById("userInput").addEventListener("keypress", function(e){
-if(e.key === "Enter"){
-sendMessage();
-}
+chatButton.addEventListener("click", () => {
+    chatContainer.classList.toggle("active");
 });
 
-/* mostrar mensajes */
+closeChat.addEventListener("click", () => {
+    chatContainer.classList.remove("active");
+});
 
-function addMessage(text,type){
+function sendMessage(){
 
-let chatbox = document.getElementById("chatbox");
+    const input = document.getElementById("userInput");
+    const chatbox = document.getElementById("chatbox");
 
-let msg = document.createElement("div");
+    let text = input.value.toLowerCase();
 
-msg.className = type;
+    if(text === "") return;
 
-msg.innerText = text;
+    chatbox.innerHTML += "<div><b>Tú:</b> "+text+"</div>";
 
-chatbox.appendChild(msg);
+    let response = "No entendí tu pregunta.";
 
-chatbox.scrollTop = chatbox.scrollHeight;
+    if(text.includes("crear cuenta")){
+        response = "Para crear una cuenta ve a la página de registro.";
+    }
 
+    if(text.includes("iniciar sesion")){
+        response = "Debes ingresar tu correo y contraseña.";
+    }
+
+    if(text.includes("comprar")){
+        response = "Selecciona un producto y agrégalo al carrito.";
+    }
+
+    chatbox.innerHTML += "<div><b>Bot:</b> "+response+"</div>";
+
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+    input.value = "";
 }
 
-/* buscar respuesta */
-
-function findResponse(input){
-
-if(!fuse){
-return "El asistente aún está cargando...";
-}
-
-let result = fuse.search(input);
-
-if(result.length > 0){
-return result[0].item.answer;
-}
-
-return "No tengo respuesta para eso todavía.";
-
-}
-
+document.getElementById("userInput").addEventListener("keypress",function(e){
+    if(e.key === "Enter"){
+        sendMessage();
+    }
 });
