@@ -1,4 +1,6 @@
-/* BOTON FLOTANTE */
+/* =========================
+BOTON FLOTANTE
+========================= */
 
 #chatButton{
 position:fixed;
@@ -16,13 +18,16 @@ border-radius:50%;
 cursor:pointer;
 box-shadow:0 4px 10px rgba(0,0,0,0.3);
 transition:transform 0.3s;
+z-index:999;
 }
 
 #chatButton:hover{
 transform:scale(1.1);
 }
 
-/* CHAT */
+/* =========================
+VENTANA CHAT
+========================= */
 
 #chatContainer{
 
@@ -49,9 +54,12 @@ pointer-events:none;
 
 transition:0.3s;
 
+z-index:999;
 }
 
-/* ABIERTO */
+/* =========================
+CHAT ABIERTO
+========================= */
 
 #chatContainer.active{
 opacity:1;
@@ -59,7 +67,9 @@ transform:translateY(0);
 pointer-events:auto;
 }
 
-/* HEADER */
+/* =========================
+HEADER
+========================= */
 
 .chat-header{
 
@@ -75,7 +85,9 @@ font-weight:bold;
 
 }
 
-/* MENSAJES */
+/* =========================
+AREA MENSAJES
+========================= */
 
 #chatbox{
 
@@ -87,23 +99,71 @@ overflow-y:auto;
 
 font-size:14px;
 
+color:black;
+
+font-family:Arial, Helvetica, sans-serif;
+
 }
+
+/* =========================
+MENSAJE USUARIO
+========================= */
 
 .user{
 
 text-align:right;
+
 margin:6px;
 
+color:black;
+
+background:#e3f2fd;
+
+padding:6px 10px;
+
+border-radius:8px;
+
+display:inline-block;
+
+max-width:80%;
+
+float:right;
+
+clear:both;
+
 }
+
+/* =========================
+MENSAJE BOT
+========================= */
 
 .bot{
 
 text-align:left;
+
 margin:6px;
+
+color:black;
+
+background:#f5f5f5;
+
+padding:6px 10px;
+
+border-radius:8px;
+
+display:inline-block;
+
+max-width:80%;
+
+float:left;
+
+clear:both;
 
 }
 
-/* INPUT */
+/* =========================
+INPUT
+========================= */
 
 .chat-input{
 
@@ -112,6 +172,8 @@ display:flex;
 border-top:1px solid #ddd;
 
 }
+
+/* caja de texto */
 
 .chat-input input{
 
@@ -123,16 +185,34 @@ border:none;
 
 outline:none;
 
+color:black;
+
+font-size:14px;
+
 }
+
+/* boton enviar */
 
 .chat-input button{
 
 background:#007BFF;
-color:rgb(0, 0, 0);
+
+color:white;
+
 border:none;
 
 padding:10px 15px;
 
 cursor:pointer;
+
+transition:0.2s;
+
+}
+
+/* hover boton */
+
+.chat-input button:hover{
+
+background:#0056b3;
 
 }
