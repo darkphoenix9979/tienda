@@ -8,15 +8,39 @@
 "answer":"Ingresa tu correo y contraseña en la página de login."
 },
 {
+"question":"recuperar contraseña",
+"answer":"Puedes recuperar tu contraseña desde la opción 'Olvidé mi contraseña'."
+},
+{
 "question":"comprar producto",
 "answer":"Selecciona un producto y agrégalo al carrito."
 },
 {
+"question":"carrito",
+"answer":"Puedes ver tu carrito en el icono 🛒 en la parte superior."
+},
+{
 "question":"metodos de pago",
-"answer":"Aceptamos tarjeta, PayPal y transferencia."
+"answer":"Aceptamos tarjeta de crédito, PayPal y transferencia."
 },
 {
 "question":"envios",
-"answer":"Los envíos tardan entre 3 y 5 días."
+"answer":"Los envíos tardan entre 3 y 5 días hábiles."
+},
+{
+"question":"costo envio",
+"answer":"El costo de envío depende de tu ubicación."
+},
+{
+"question":"seguimiento pedido",
+"answer":"Después de comprar recibirás un número de seguimiento."
+},
+{
+"question":"soporte",
+"answer":"Puedes contactar soporte desde la sección de ayuda."
+},
+{
+"question":"contacto",
+"answer":"Puedes contactarnos por correo o desde la página de soporte."
 }
 ]
