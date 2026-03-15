@@ -305,6 +305,42 @@ window.location.href="login.html"
 
 }
 
+// ==========================
+// DASHBOARD CONTADORES
+// ==========================
+
+async function cargarDashboard(){
+
+try{
+
+// PRODUCTOS
+const resProductos = await fetch("/api/products");
+const productos = await resProductos.json();
+
+document.getElementById("totalProductos").innerText = productos.length;
+
+
+// USUARIOS
+const resUsuarios = await fetch("/api/users");
+const usuarios = await resUsuarios.json();
+
+document.getElementById("totalUsuarios").innerText = usuarios.length;
+
+
+// PREGUNTAS BOT
+const resPreguntas = await fetch("/unknown_questions.json");
+const preguntas = await resPreguntas.json();
+
+document.getElementById("totalPreguntas").innerText = preguntas.length;
+
+}catch(error){
+
+console.error("Error cargando dashboard",error);
+
+}
+
+}
+
 
 // ==========================
 // INICIO
@@ -313,3 +349,4 @@ window.location.href="login.html"
 cargarProductos();
 cargarCarruselAdmin();
 cargarPreguntas();
+cargarDashboard();
