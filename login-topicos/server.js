@@ -34,51 +34,56 @@ app.use("/api/auth", authRoutes);
 app.use("/api/carousel", carouselRoutes);
 
 /* ==========================
-   GUARDAR PREGUNTAS DESCONOCIDAS
+   GUARDAR PREGUNTAS DESCONOCIDAS (MongoDB)
 ========================== */
 
-app.post("/unknown", (req, res) => {
+const UnknownQuestion = require("./models/UnknownQuestion");
 
-    const question = req.body.question;
-
-    if (!question) {
-        return res.status(400).json({ error: "Pregunta vacía" });
-    }
-
-    let data = [];
+app.post("/api/chatbot/unknown", async (req, res) => {
 
     try {
 
-        if (fs.existsSync("unknown_questions.json")) {
+        const question = req.body.question;
 
-            const fileContent = fs.readFileSync("unknown_questions.json");
-            data = JSON.parse(fileContent);
-
+        if (!question) {
+            return res.status(400).json({ error: "Pregunta vacía" });
         }
 
-    } catch (error) {
+        const newQuestion = new UnknownQuestion({
+            question: question
+        });
 
-        console.error("Error leyendo unknown_questions.json:", error);
-        data = [];
+        await newQuestion.save();
 
-    }
-
-    data.push(question);
-
-    try {
-
-        fs.writeFileSync(
-            "unknown_questions.json",
-            JSON.stringify(data, null, 2)
-        );
+        res.json({ status: "saved" });
 
     } catch (error) {
 
         console.error("Error guardando pregunta:", error);
+        res.status(500).json({ error: "Error del servidor" });
 
     }
 
-    res.json({ status: "saved" });
+});
+
+/* ==========================
+   VER PREGUNTAS DESCONOCIDAS
+========================== */
+
+app.get("/api/chatbot/questions", async (req, res) => {
+
+    try {
+
+        const questions = await UnknownQuestion.find().sort({ date: -1 });
+
+        res.json(questions);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).json({ error: "Error del servidor" });
+
+    }
 
 });
 

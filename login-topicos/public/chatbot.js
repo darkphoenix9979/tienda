@@ -129,7 +129,7 @@ callback();
 
 function saveUnknown(question){
 
-fetch("/unknown",{
+fetch("/api/chatbot/unknown",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
