@@ -12,45 +12,62 @@ function togglePassword(id){
     input.type = input.type === "password" ? "text" : "password";
 }
 
-// LOGIN con submit en el formulario
+// LOGIN
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
+
     e.preventDefault();
 
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
     try {
-        const res = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
+
+        const res = await fetch("/api/auth/login",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({email,password})
         });
 
-        const text = await res.text();
-        console.log("Respuesta del servidor:", text);
+        const data = await res.json();
 
-        if (!text) {
-            alert("El servidor no devolvió nada");
-            return;
-        }
+        if(res.ok){
 
-        const data = JSON.parse(text);
+            // guardar sesión
+            localStorage.setItem("token","autenticado");
+            localStorage.setItem("username",data.username);
+            localStorage.setItem("role",data.role);
 
-        if (res.ok) {
-            localStorage.setItem("token", "autenticado");
-            localStorage.setItem("username", email);
-            window.location.href = "tienda.html";
-        } else {
+            // redirección según rol
+            if(data.role === "admin"){
+
+                window.location.href = "admin.html";
+
+            }else{
+
+                window.location.href = "tienda.html";
+
+            }
+
+        }else{
+
             alert(data.message);
+
         }
 
-    } catch (error) {
-        console.error("Error:", error);
+    }catch(error){
+
+        console.error("Error:",error);
+
     }
+
 });
+
 
 // REGISTER
 async function register(){
+
     const username = document.getElementById("registerUsername").value;
     const email = document.getElementById("registerEmail").value;
     const password = document.getElementById("registerPassword").value;
@@ -64,12 +81,19 @@ async function register(){
     const data = await response.json();
 
     if(response.ok){
+
         alert("Registro exitoso 🌸");
+
         switchForm();
+
     }else{
-        alert("Error al registrar");
+
+        alert(data.message);
+
     }
+
 }
+
 
 // PARTICULAS
 const canvas = document.getElementById("particles");
@@ -78,7 +102,9 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let particles=[];
+
 for(let i=0;i<80;i++){
+
     particles.push({
         x:Math.random()*canvas.width,
         y:Math.random()*canvas.height,
@@ -86,23 +112,31 @@ for(let i=0;i<80;i++){
         dx:(Math.random()-0.5),
         dy:(Math.random()-0.5)
     });
+
 }
 
 function animate(){
+
     ctx.clearRect(0,0,canvas.width,canvas.height);
+
     ctx.fillStyle="#ff00cc";
 
     particles.forEach(p=>{
+
         ctx.beginPath();
         ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
         ctx.fill();
+
         p.x+=p.dx;
         p.y+=p.dy;
+
         if(p.x<0||p.x>canvas.width)p.dx*=-1;
         if(p.y<0||p.y>canvas.height)p.dy*=-1;
+
     });
 
     requestAnimationFrame(animate);
+
 }
 
 animate();
