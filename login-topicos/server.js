@@ -33,25 +33,53 @@ app.use("/api/products", productsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/carousel", carouselRoutes);
 
-// Ruta para guardar preguntas desconocidas (Fusionada)
-app.post("/save_question", (req, res) => {
+/* ==========================
+   GUARDAR PREGUNTAS DESCONOCIDAS
+========================== */
+
+app.post("/unknown", (req, res) => {
+
     const question = req.body.question;
+
+    if (!question) {
+        return res.status(400).json({ error: "Pregunta vacía" });
+    }
+
     let data = [];
-    
-    if (fs.existsSync("unknown_questions.json")) {
-        try {
+
+    try {
+
+        if (fs.existsSync("unknown_questions.json")) {
+
             const fileContent = fs.readFileSync("unknown_questions.json");
             data = JSON.parse(fileContent);
-        } catch (error) {
-            console.error("Error al leer el archivo JSON:", error);
-            data = [];
+
         }
+
+    } catch (error) {
+
+        console.error("Error leyendo unknown_questions.json:", error);
+        data = [];
+
     }
-    
+
     data.push(question);
-    fs.writeFileSync("unknown_questions.json", JSON.stringify(data, null, 2));
-    
-    res.json({ message: "Pregunta guardada" });
+
+    try {
+
+        fs.writeFileSync(
+            "unknown_questions.json",
+            JSON.stringify(data, null, 2)
+        );
+
+    } catch (error) {
+
+        console.error("Error guardando pregunta:", error);
+
+    }
+
+    res.json({ status: "saved" });
+
 });
 
 /* ==========================
@@ -59,12 +87,12 @@ app.post("/save_question", (req, res) => {
 ========================== */
 
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("✅ MongoDB conectado correctamente");
-    })
-    .catch((err) => {
-        console.error("❌ Error conectando a MongoDB:", err);
-    });
+.then(() => {
+    console.log("✅ MongoDB conectado correctamente");
+})
+.catch((err) => {
+    console.error("❌ Error conectando a MongoDB:", err);
+});
 
 /* ==========================
    RUTA PRINCIPAL
@@ -82,26 +110,4 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-});
-
-const fs = require("fs");
-
-app.post("/unknown", (req, res) => {
-
-const question = req.body.question;
-
-let data = [];
-
-try{
-data = JSON.parse(fs.readFileSync("unknown_questions.json"));
-}catch{
-data = [];
-}
-
-data.push(question);
-
-fs.writeFileSync("unknown_questions.json", JSON.stringify(data,null,2));
-
-res.json({status:"saved"});
-
 });
