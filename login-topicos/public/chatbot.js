@@ -129,22 +129,19 @@ callback();
 
 function saveUnknown(question){
 
-fetch("unknown_questions.json")
+fetch("/unknown",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({question})
+})
 .then(res=>res.json())
 .then(data=>{
-
-data.push(question);
-
-fetch("unknown_questions.json",{
-method:"POST",
-body:JSON.stringify(data)
-});
-
+console.log("Pregunta guardada:",data);
 })
-.catch(()=>{
-
-console.log("Pregunta no registrada:",question);
-
+.catch(err=>{
+console.error("Error guardando pregunta:",err);
 });
 
 }

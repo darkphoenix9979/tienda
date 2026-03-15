@@ -83,3 +83,25 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
 });
+
+const fs = require("fs");
+
+app.post("/unknown", (req, res) => {
+
+const question = req.body.question;
+
+let data = [];
+
+try{
+data = JSON.parse(fs.readFileSync("unknown_questions.json"));
+}catch{
+data = [];
+}
+
+data.push(question);
+
+fs.writeFileSync("unknown_questions.json", JSON.stringify(data,null,2));
+
+res.json({status:"saved"});
+
+});
