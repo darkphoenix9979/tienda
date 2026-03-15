@@ -287,6 +287,24 @@ console.log("No hay preguntas registradas");
 
 }
 
+function mostrarPanel(panel){
+
+document.querySelectorAll(".panel").forEach(p=>{
+p.classList.add("hidden")
+})
+
+document.getElementById(panel).classList.remove("hidden")
+
+}
+
+function logout(){
+
+localStorage.clear()
+
+window.location.href="login.html"
+
+}
+
 
 // ==========================
 // INICIO
