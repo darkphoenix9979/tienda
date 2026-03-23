@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
             resetMsg.style.cssText = `
                 margin: 10px 0;
                 padding: 10px 14px;
-                background: #fff3e0;
+                background: #000000;
                 border-left: 4px solid #ff9800;
                 border-radius: 8px;
                 font-size: 14px;
