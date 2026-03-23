@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         resetBtn.title = "Reiniciar conversación";
         resetBtn.style.cssText = `
             background: #6c757d;
-            color: white;
+            color: black;
             border: none;
             border-radius: 50%;
             width: 30px;
