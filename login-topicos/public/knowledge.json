@@ -41,6 +41,25 @@
 },
 {
 "question":"contacto",
-"answer":"Puedes contactarnos por correo o desde la página de soporte."
+"answer":"Puedes contactarnos via WhatsApp al +52 123 456 7890."
+},
+{
+"question":"horarios de atención",
+"answer":"Nuestro horario de atención es de lunes a domingo las 24 horas."
+},
+{
+"question":"devoluciones",
+"answer":"Aceptamos devoluciones dentro de los 30 días posteriores a la compra."
+},
+{
+"question":"garantía",
+"answer":"Ofrecemos garantía de 1 mes en todos nuestros productos."
+},
+{"question":"descuentos",
+"answer":"Ofrecemos descuentos especiales durante eventos y promociones."
+},
+{
+"question":"Donde nos encontramos",
+"answer":"Nos encontramos en Eje Central Lázaro Cárdenas 9, Colonia Centro, Centro, Cuauhtémoc, 06050 Ciudad de México, CDMX, México."
 }
 ]
