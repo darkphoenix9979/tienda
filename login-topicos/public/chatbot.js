@@ -371,7 +371,7 @@ Puedes preguntarme sobre:
                 max-width: 85%;
                 word-wrap: break-word;
                 line-height: 1.4;
-                color: #000000;
+                color: #47dde7af;
             `;
             botMsg.innerHTML = `<b>🤖 Bounty:</b> ${response.replace(/\n/g, '<br>')}`;
             chatbox.appendChild(botMsg);
