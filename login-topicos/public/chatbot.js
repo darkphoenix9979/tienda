@@ -71,6 +71,21 @@ document.addEventListener("DOMContentLoaded", () => {
         "comprar": ["comprar", "producto", "adquirir", "precio", "costo"]
     };
 
+    /* Nuevos grupos de intención para contacto y ubicación */
+    const locationContactKeywords = {
+    "contacto": [
+        "contacto", "contactar", "whatsapp", "teléfono", "telefono", 
+        "llamar", "mensaje", "correo", "email", "atención", "soporte",
+        "hablar con ustedes", "comunicarme", "los contacto"
+    ],
+    "ubicacion": [
+        "donde se encuentran", "donde estan", "ubicación", "ubicacion",
+        "dirección", "direccion", "oficinas", "tienda", "sucursal",
+        "visitarlos", "ir a verlos", "ciudad de méxico", "cdmx",
+        "eje central", "centro", "méxico", "address", "location"
+    ]
+    };
+
     /* animación escribiendo */
     function typingAnimation(callback){
         chatbox.innerHTML += `<div id="typing"><b>Bot:</b> escribiendo...</div>`;
@@ -151,6 +166,40 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         }
+
+        /* 2.5. Detección específica para Contacto y Ubicación */
+        if(!response){
+
+            // ¿El usuario pregunta por contacto?
+            const contactoMatch = locationContactKeywords.contacto.some(kw => normalized.includes(kw));
+            if(contactoMatch){
+             // Buscamos en knowledge la entrada relacionada con contacto
+            const contactoEntry = knowledge.find(k => 
+            normalize(k.question).includes("contacto") || 
+            normalize(k.answer).includes("whatsapp") ||
+            normalize(k.answer).includes("+52")
+         );
+         if(contactoEntry){
+            response = contactoEntry.answer;
+         }
+        }
+    
+          // ¿El usuario pregunta por ubicación?
+          const ubicacionMatch = locationContactKeywords.ubicacion.some(kw => normalized.includes(kw));
+          if(ubicacionMatch && !response){
+         // Buscamos en knowledge la entrada relacionada con ubicación
+         const ubicacionEntry = knowledge.find(k => 
+             normalize(k.question).includes("donde") || 
+                normalize(k.question).includes("encuentran") ||
+                normalize(k.answer).includes("eje central") ||
+                normalize(k.answer).includes("ciudad de méxico") ||
+                normalize(k.answer).includes("cdmx")
+            );
+            if(ubicacionEntry){
+            response = ubicacionEntry.answer;
+            }
+        }
+    }
 
         /* 3. Búsqueda Inteligente General (Fuse) */
         if(!response && fuse){
