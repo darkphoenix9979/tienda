@@ -49,6 +49,7 @@
     z-index: 9999;
     overflow: hidden;
     animation: slideUp 0.3s ease;
+    color: #000000;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
