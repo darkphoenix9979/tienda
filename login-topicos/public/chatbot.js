@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     margin: 10px 0;
                     padding: 10px 14px;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: #000000;
+                    color: #70ece6;
                     border-radius: 12px;
                     font-size: 14px;
                     animation: fadeIn 0.3s ease;
@@ -371,7 +371,7 @@ Puedes preguntarme sobre:
                 max-width: 85%;
                 word-wrap: break-word;
                 line-height: 1.4;
-                color: #47dde7af;
+                color: #000000af;
             `;
             botMsg.innerHTML = `<b>🤖 Bounty:</b> ${response.replace(/\n/g, '<br>')}`;
             chatbox.appendChild(botMsg);
