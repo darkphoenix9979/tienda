@@ -1,39 +1,48 @@
-console.log("CHATBOT FUNCIONANDO");
+console.log("🤖 CHATBOT BOUNTY FUNCIONANDO");
 
 let knowledge = [];
 let fuse;
+let welcomeSent = false;
+let resetBtn = null;
 
-/* normalizar texto */
+/* ==========================================
+   🧹 NORMALIZAR TEXTO
+   ========================================== */
 function normalize(text){
     return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim(); // Agregué trim para limpiar espacios extra
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
 }
 
-/* cargar conocimiento */
+/* ==========================================
+   📚 CARGAR CONOCIMIENTO
+   ========================================== */
 fetch("knowledge.json")
-.then(res => res.json())
-.then(data => {
-    knowledge = data;
+    .then(res => res.json())
+    .then(data => {
+        knowledge = data;
 
-    // AJUSTE 1: Bajé el threshold a 0.3 para que sea más flexible con frases largas
-    fuse = new Fuse(knowledge, {
-        keys: ["question"],
-        threshold: 0.3, 
-        ignoreLocation: true, // Ignora dónde está la palabra en la frase
-        distance: 100
+        fuse = new Fuse(knowledge, {
+            keys: ["question"],
+            threshold: 0.3,
+            ignoreLocation: true,
+            distance: 100
+        });
+
+        console.log("✅ Knowledge cargado:", knowledge.length, "entradas");
+    })
+    .catch(err => {
+        console.error("❌ Error cargando knowledge:", err);
     });
 
-    console.log("Knowledge cargado:", knowledge);
-})
-.catch(err => {
-    console.error("Error cargando knowledge:", err);
-});
-
+/* ==========================================
+   🎬 INICIALIZAR CHAT AL CARGAR DOM
+   ========================================== */
 document.addEventListener("DOMContentLoaded", () => {
 
+    /* --- ELEMENTOS DEL DOM --- */
     const chatButton = document.getElementById("chatButton");
     const chatContainer = document.getElementById("chatContainer");
     const closeChat = document.getElementById("closeChat");
@@ -41,90 +50,211 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendBtn = document.querySelector(".chat-input button");
     const chatbox = document.getElementById("chatbox");
 
-    /* abrir chat */
-    chatButton.addEventListener("click", () => {
-        chatContainer.classList.toggle("active");
-    });
+    if (!chatButton || !chatContainer || !chatbox) {
+        console.warn("⚠️ Elementos del chat no encontrados. Verifica tu HTML.");
+        return;
+    }
 
-    /* cerrar chat */
-    closeChat.addEventListener("click", () => {
-        chatContainer.classList.remove("active");
-    });
+    /* ==========================================
+       🔘 CREAR BOTÓN DE REINICIAR (DINÁMICO)
+       ========================================== */
+    function createResetButton() {
+        if (resetBtn) return resetBtn;
+        
+        resetBtn = document.createElement("button");
+        resetBtn.id = "resetChat";
+        resetBtn.innerHTML = "🔄";
+        resetBtn.title = "Reiniciar conversación";
+        resetBtn.style.cssText = `
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            margin-right: 8px;
+            font-size: 14px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        `;
+        
+        resetBtn.onmouseenter = () => resetBtn.style.background = "#5a6268";
+        resetBtn.onmouseleave = () => resetBtn.style.background = "#6c757d";
+        
+        return resetBtn;
+    }
 
-    /* conversación básica */
+    /* ==========================================
+       👋 MENSAJE DE BIENVENIDA
+       ========================================== */
+    function sendWelcomeMessage() {
+        if (!welcomeSent) {
+            setTimeout(() => {
+                const welcomeMsg = document.createElement("div");
+                welcomeMsg.style.cssText = `
+                    margin: 10px 0;
+                    padding: 10px 14px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border-radius: 12px;
+                    font-size: 14px;
+                    animation: fadeIn 0.3s ease;
+                `;
+                welcomeMsg.innerHTML = `<b>🤖 Bounty:</b> Hola soy Bounty tu asistente en esta página web 👋`;
+                chatbox.appendChild(welcomeMsg);
+                chatbox.scrollTop = chatbox.scrollHeight;
+                welcomeSent = true;
+            }, 400);
+        }
+    }
+
+    /* ==========================================
+       🔄 REINICIAR CONVERSACIÓN
+       ========================================== */
+    function resetConversation() {
+        chatbox.innerHTML = "";
+        welcomeSent = false;
+        userInput.value = "";
+        
+        setTimeout(() => {
+            const resetMsg = document.createElement("div");
+            resetMsg.style.cssText = `
+                margin: 10px 0;
+                padding: 10px 14px;
+                background: #fff3e0;
+                border-left: 4px solid #ff9800;
+                border-radius: 8px;
+                font-size: 14px;
+            `;
+            resetMsg.innerHTML = `<b>🔄 Bot:</b> Conversación reiniciada. ¿En qué puedo ayudarte ahora?`;
+            chatbox.appendChild(resetMsg);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }, 200);
+    }
+
+    /* ==========================================
+       ✨ ANIMACIÓN "ESCRIBIENDO..."
+       ========================================== */
+    function typingAnimation(callback){
+        const typingDiv = document.createElement("div");
+        typingDiv.id = "typing";
+        typingDiv.style.cssText = `
+            margin: 8px 0;
+            padding: 10px 14px;
+            background: #f1f1f1;
+            border-radius: 18px;
+            font-style: italic;
+            color: #666;
+            max-width: 80%;
+        `;
+        typingDiv.innerHTML = `<b>🤖 Bounty:</b> escribiendo<span class="dots">...</span>`;
+        chatbox.appendChild(typingDiv);
+        chatbox.scrollTop = chatbox.scrollHeight;
+
+        // Animación de puntos
+        let dots = 0;
+        const dotInterval = setInterval(() => {
+            const dotsEl = typingDiv.querySelector(".dots");
+            if (dotsEl) {
+                dots = (dots + 1) % 4;
+                dotsEl.textContent = ".".repeat(dots);
+            }
+        }, 300);
+
+        setTimeout(() => {
+            clearInterval(dotInterval);
+            if (typingDiv.parentNode) typingDiv.remove();
+            callback();
+        }, 800 + Math.random() * 400);
+    }
+
+    /* ==========================================
+       💾 GUARDAR PREGUNTAS DESCONOCIDAS
+       ========================================== */
+    function saveUnknown(question){
+        fetch("/api/chatbot/unknown", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question, timestamp: new Date().toISOString() })
+        })
+        .then(res => res.json())
+        .then(data => console.log("✅ Pregunta guardada:", data))
+        .catch(err => console.warn("⚠️ Backend no disponible para guardar pregunta:", err));
+    }
+
+    /* ==========================================
+       💬 BASE DE CONVERSACIÓN BÁSICA
+       ========================================== */
     const smallTalk = {
         hola: ["Hola 👋 ¿En qué puedo ayudarte?", "¡Hola! ¿Qué necesitas?", "Bienvenido ¿cómo puedo ayudarte?"],
         "como estas": ["Estoy funcionando perfectamente 😄", "Todo bien por aquí ¿y tú?", "Listo para ayudarte 👍"],
         gracias: ["¡Con gusto!", "Para eso estoy 😄", "Cuando necesites ayuda aquí estaré."],
-        adios: ["Hasta luego 👋", "Que tengas un buen día", "Nos vemos pronto"]
+        adios: ["Hasta luego 👋", "Que tengas un buen día", "Nos vemos pronto"],
+        "buenos dias": ["¡Buenos días! ☀️ ¿Cómo puedo ayudarte hoy?", "Buenos días, estoy listo para asistirte"],
+        "buenas tardes": ["¡Buenas tardes! 🌤️ ¿Qué necesitas?", "Buenas tardes, en qué te ayudo"],
+        "buenas noches": ["¡Buenas noches! 🌙 ¿En qué puedo servirte?", "Buenas noches, aquí para ayudarte"]
     };
 
-    /* 
-       AJUSTE 2: Mapa de Intenciones 
-       En lugar de solo sinónimos de palabras, mapeamos grupos de palabras 
-       que significan lo mismo para buscar en el JSON.
-    */
+    /* ==========================================
+       🎯 GRUPOS DE INTENCIONES
+       ========================================== */
     const intentGroups = {
-        "iniciar_sesion": ["iniciar sesion", "login", "entrar", "acceso", "loguear", "ingresar", "cuenta"],
-        "metodos_pago": ["pagar", "pago", "tarjeta", "dinero", "paypal", "transferencia"],
-        "envios": ["envio", "entrega", "paquete", "llegada", "tiempo envio", "guia"],
-        "comprar": ["comprar", "producto", "adquirir", "precio", "costo"]
+        "iniciar_sesion": ["iniciar sesion", "login", "entrar", "acceso", "loguear", "ingresar", "cuenta", "registrarme"],
+        "metodos_pago": ["pagar", "pago", "tarjeta", "dinero", "paypal", "transferencia", "oxxo", "spei", "mercado pago"],
+        "envios": ["envio", "entrega", "paquete", "llegada", "tiempo envio", "guia", "rastreo", "seguimiento"],
+        "comprar": ["comprar", "producto", "adquirir", "precio", "costo", "catalogo", "tienda"],
+        "devolucion": ["devolver", "devolucion", "reembolso", "cambiar", "garantia"],
+        "soporte": ["ayuda", "soporte", "problema", "error", "no funciona", "asistencia"]
     };
 
-    /* Nuevos grupos de intención para contacto y ubicación */
     const locationContactKeywords = {
-    "contacto": [
-        "contacto", "contactar", "whatsapp", "teléfono", "telefono", 
-        "llamar", "mensaje", "correo", "email", "atención", "soporte",
-        "hablar con ustedes", "comunicarme", "los contacto"
-    ],
-    "ubicacion": [
-        "donde se encuentran", "donde estan", "ubicación", "ubicacion",
-        "dirección", "direccion", "oficinas", "tienda", "sucursal",
-        "visitarlos", "ir a verlos", "ciudad de méxico", "cdmx",
-        "eje central", "centro", "méxico", "address", "location"
-    ]
+        "contacto": [
+            "contacto", "contactar", "whatsapp", "teléfono", "telefono", 
+            "llamar", "mensaje", "correo", "email", "atención", "soporte",
+            "hablar con ustedes", "comunicarme", "los contacto", "atencion al cliente"
+        ],
+        "ubicacion": [
+            "donde se encuentran", "donde estan", "ubicación", "ubicacion",
+            "dirección", "direccion", "oficinas", "tienda", "sucursal",
+            "visitarlos", "ir a verlos", "ciudad de méxico", "cdmx",
+            "eje central", "centro", "méxico", "address", "location", "direccion fisica"
+        ]
     };
 
-    /* animación escribiendo */
-    function typingAnimation(callback){
-        chatbox.innerHTML += `<div id="typing"><b>Bot:</b> escribiendo...</div>`;
-        chatbox.scrollTop = chatbox.scrollHeight;
-        setTimeout(() => {
-            const typingDiv = document.getElementById("typing");
-            if(typingDiv) typingDiv.remove();
-            callback();
-        }, 800);
-    }
-
-    /* guardar preguntas desconocidas */
-    function saveUnknown(question){
-        // Nota: Asegúrate de tener este endpoint en tu backend, si no, comentalo para evitar errores
-        fetch("/api/chatbot/unknown", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question })
-        })
-        .then(res => res.json())
-        .then(data => console.log("Pregunta guardada:", data))
-        .catch(err => console.error("Error guardando pregunta (Backend no disponible?):", err));
-    }
-
-    /* enviar mensaje */
+    /* ==========================================
+       🎯 FUNCIÓN PRINCIPAL: ENVIAR MENSAJE
+       ========================================== */
     function sendMessage(){
         let text = userInput.value.trim();
         if(text === "") return;
 
         let normalized = normalize(text);
 
-        // Mostrar mensaje usuario
-        chatbox.innerHTML += `<div><b>Tú:</b> ${text}</div>`;
+        // Mostrar mensaje del usuario
+        const userMsg = document.createElement("div");
+        userMsg.style.cssText = `
+            margin: 8px 0;
+            padding: 10px 14px;
+            background: #007bff;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            max-width: 85%;
+            margin-left: auto;
+            word-wrap: break-word;
+        `;
+        userMsg.innerHTML = `<b>Tú:</b> ${text}`;
+        chatbox.appendChild(userMsg);
         chatbox.scrollTop = chatbox.scrollHeight;
+        
         userInput.value = "";
 
         let response = null;
 
-        /* 1. Conversación básica (Saludos) */
+        /* 🔹 1. Conversación básica (Saludos) */
         for(let key in smallTalk){
             if(normalized.includes(key)){
                 let answers = smallTalk[key];
@@ -133,27 +263,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        /* 2. Detección de Intención por Palabras Clave (Mejora Principal) */
+        /* 🔹 2. Detección de Intención por Palabras Clave */
         if(!response){
-            // Buscamos si el texto del usuario contiene palabras de nuestros grupos
             for (const [intent, keywords] of Object.entries(intentGroups)) {
-                // Verificamos si alguna palabra clave del grupo está en el mensaje del usuario
                 const foundKeyword = keywords.find(keyword => normalized.includes(keyword));
                 
                 if (foundKeyword) {
-                    // Si encontramos una palabra clave (ej: "login"), buscamos en el conocimiento
-                    // algo relacionado con esa intención específica.
+                    let result = fuse?.search(foundKeyword);
                     
-                    // Opción A: Buscar directamente en Fuse usando la palabra clave encontrada
-                    let result = fuse.search(foundKeyword);
-                    
-                    if(result.length > 0){
+                    if(result?.length > 0){
                         response = result[0].item.answer;
                         break;
                     }
 
-                    // Opción B: Si Fuse falla, buscamos manualmente en el JSON si la pregunta contiene la intención
-                    // Esto es útil si en tu JSON la pregunta es "¿Cómo inicio sesión?" y el usuario dijo "login"
                     const manualMatch = knowledge.find(k => 
                         normalize(k.question).includes(intent) || 
                         keywords.some(k => normalize(k.question).includes(k))
@@ -167,58 +289,53 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        /* 2.5. Detección específica para Contacto y Ubicación */
+        /* 🔹 2.5. Contacto y Ubicación */
         if(!response){
-
-            // ¿El usuario pregunta por contacto?
             const contactoMatch = locationContactKeywords.contacto.some(kw => normalized.includes(kw));
             if(contactoMatch){
-             // Buscamos en knowledge la entrada relacionada con contacto
-            const contactoEntry = knowledge.find(k => 
-            normalize(k.question).includes("contacto") || 
-            normalize(k.answer).includes("whatsapp") ||
-            normalize(k.answer).includes("+52")
-         );
-         if(contactoEntry){
-            response = contactoEntry.answer;
-         }
-        }
-    
-          // ¿El usuario pregunta por ubicación?
-          const ubicacionMatch = locationContactKeywords.ubicacion.some(kw => normalized.includes(kw));
-          if(ubicacionMatch && !response){
-         // Buscamos en knowledge la entrada relacionada con ubicación
-         const ubicacionEntry = knowledge.find(k => 
-             normalize(k.question).includes("donde") || 
-                normalize(k.question).includes("encuentran") ||
-                normalize(k.answer).includes("eje central") ||
-                normalize(k.answer).includes("ciudad de méxico") ||
-                normalize(k.answer).includes("cdmx")
-            );
-            if(ubicacionEntry){
-            response = ubicacionEntry.answer;
+                const contactoEntry = knowledge.find(k => 
+                    normalize(k.question).includes("contacto") || 
+                    normalize(k.answer).includes("whatsapp") ||
+                    normalize(k.answer).includes("+52") ||
+                    normalize(k.answer).includes("correo") ||
+                    normalize(k.answer).includes("email")
+                );
+                if(contactoEntry){
+                    response = contactoEntry.answer;
+                }
+            }
+        
+            const ubicacionMatch = locationContactKeywords.ubicacion.some(kw => normalized.includes(kw));
+            if(ubicacionMatch && !response){
+                const ubicacionEntry = knowledge.find(k => 
+                    normalize(k.question).includes("donde") || 
+                    normalize(k.question).includes("encuentran") ||
+                    normalize(k.answer).includes("eje central") ||
+                    normalize(k.answer).includes("ciudad de méxico") ||
+                    normalize(k.answer).includes("cdmx") ||
+                    normalize(k.answer).includes("dirección")
+                );
+                if(ubicacionEntry){
+                    response = ubicacionEntry.answer;
+                }
             }
         }
-    }
 
-        /* 3. Búsqueda Inteligente General (Fuse) */
+        /* 🔹 3. Búsqueda Inteligente con Fuse.js */
         if(!response && fuse){
             let result = fuse.search(normalized);
-            if(result.length > 0){
-                // Verificamos que la puntuación no sea terrible (opcional, threshold ya lo hace)
+            if(result.length > 0 && result[0].score < 0.5){
                 response = result[0].item.answer;
             }
         }
 
-        /* 4. Búsqueda inversa (Si el JSON tiene preguntas cortas) */
+        /* 🔹 4. Búsqueda inversa (contiene pregunta) */
         if(!response){
             for(let item of knowledge){
-                // Si la pregunta del usuario es larga y contiene la pregunta del JSON
                 if(normalized.includes(normalize(item.question))){
                     response = item.answer;
                     break;
                 }
-                // O si la pregunta del JSON contiene palabras clave fuertes del usuario
                 if(normalize(item.question).includes(normalized) && normalized.length > 3){
                      response = item.answer;
                      break;
@@ -226,7 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        /* 5. Si no entiende */
+        /* 🔹 5. Respuesta por defecto si no entiende */
         if(!response){
             response = `No entendí tu pregunta 🤔
 
@@ -234,28 +351,106 @@ Puedes preguntarme sobre:
 • crear cuenta
 • iniciar sesión
 • comprar productos
-• envíos
+• envíos y rastreo
 • métodos de pago
 • devoluciones
-• contacto
-• soporte técnico`;
+• contacto y soporte
+• ubicación de oficinas`;
             
-            // Solo guardamos si no es un saludo vacío
             if(normalized.length > 3) saveUnknown(text);
         }
 
-        /* mostrar respuesta */
+        /* 🔹 Mostrar respuesta con animación */
         typingAnimation(() => {
-            chatbox.innerHTML += `<div><b>Bot:</b> ${response}</div>`;
+            const botMsg = document.createElement("div");
+            botMsg.style.cssText = `
+                margin: 8px 0;
+                padding: 10px 14px;
+                background: #f1f1f1;
+                border-radius: 18px 18px 18px 4px;
+                max-width: 85%;
+                word-wrap: break-word;
+                line-height: 1.4;
+            `;
+            botMsg.innerHTML = `<b>🤖 Bounty:</b> ${response.replace(/\n/g, '<br>')}`;
+            chatbox.appendChild(botMsg);
             chatbox.scrollTop = chatbox.scrollHeight;
         });
     }
 
-    /* botón */
-    sendBtn.addEventListener("click", sendMessage);
+    /* ==========================================
+       🎯 EVENTOS DEL CHAT
+       ========================================== */
 
-    /* ENTER */
-    userInput.addEventListener("keypress", (e) => {
-        if(e.key === "Enter") sendMessage();
+    /* 👉 Abrir chat + bienvenida + botón reiniciar */
+    chatButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        chatContainer.classList.add("active");
+        
+        // Insertar botón de reiniciar en el header
+        const chatHeader = chatContainer.querySelector(".chat-header");
+        if (chatHeader && !chatHeader.contains(resetBtn)) {
+            const btn = createResetButton();
+            const closeBtn = chatHeader.querySelector("#closeChat");
+            if (closeBtn) {
+                chatHeader.insertBefore(btn, closeBtn);
+            } else {
+                chatHeader.appendChild(btn);
+            }
+            
+            btn.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                resetConversation();
+            });
+        }
+        
+        sendWelcomeMessage();
     });
+
+    /* ❌ Cerrar chat con botón X */
+    if (closeChat) {
+        closeChat.addEventListener("click", (e) => {
+            e.stopPropagation();
+            chatContainer.classList.remove("active");
+        });
+    }
+
+    /* 🔄 Botón de enviar mensaje */
+    if (sendBtn) {
+        sendBtn.addEventListener("click", sendMessage);
+    }
+
+    /* ⌨️ Enviar con Enter */
+    if (userInput) {
+        userInput.addEventListener("keypress", (e) => {
+            if(e.key === "Enter") sendMessage();
+        });
+    }
+
+    /* 🖱️ Cerrar chat al hacer clic FUERA */
+    document.addEventListener("click", (e) => {
+        if (chatContainer.classList.contains("active") && 
+            !chatContainer.contains(e.target) && 
+            e.target !== chatButton &&
+            !chatButton.contains(e.target)) {
+            chatContainer.classList.remove("active");
+        }
+    });
+
+    /* 🛡️ Evitar que clicks internos cierren el chat */
+    chatContainer.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+
+    /* 📱 Soporte táctil para móviles */
+    document.addEventListener("touchstart", (e) => {
+        if (chatContainer.classList.contains("active") && 
+            !chatContainer.contains(e.target) && 
+            e.target !== chatButton &&
+            !chatButton.contains(e.target)) {
+            chatContainer.classList.remove("active");
+        }
+    }, { passive: true });
+
+    console.log("✅ Chatbot Bounty inicializado correctamente");
 });
