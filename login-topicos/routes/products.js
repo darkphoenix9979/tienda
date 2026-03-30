@@ -2,16 +2,23 @@ const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
 
-// Crear producto (versión estable sin multer)
+// ==========================
+// ✅ CREAR PRODUCTO (POST)
+// ==========================
 router.post("/", async (req, res) => {
   try {
     const { name, price, image, stock } = req.body;
 
+    // Validación básica
+    if (!name || price === undefined || stock === undefined || !image) {
+      return res.status(400).json({ message: "Todos los campos son obligatorios" });
+    }
+
     const newProduct = new Product({
       name,
-      price,
+      price: parseFloat(price),  // ✅ Asegurar que sea número
       image,
-      stock
+      stock: parseInt(stock)     // ✅ Asegurar que sea número
     });
 
     await newProduct.save();
@@ -19,18 +26,84 @@ router.post("/", async (req, res) => {
     res.status(201).json(newProduct);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al crear producto" });
+    console.error("Error creando producto:", error);
+    res.status(500).json({ message: "Error al crear producto", error: error.message });
   }
 });
 
-// Obtener productos
+// ==========================
+// ✅ OBTENER PRODUCTOS (GET)
+// ==========================
 router.get("/", async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().sort({ createdAt: -1 }); // ✅ Más recientes primero
     res.json(products);
   } catch (error) {
+    console.error("Error obteniendo productos:", error);
     res.status(500).json({ message: "Error al obtener productos" });
+  }
+});
+
+// ==========================
+// ✅ ACTUALIZAR PRODUCTO (PUT) ← AGREGADO
+// ==========================
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, stock, image } = req.body;
+
+    // Validación básica
+    if (!name || price === undefined || stock === undefined) {
+      return res.status(400).json({ message: "Nombre, precio y stock son obligatorios" });
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        name,
+        price: parseFloat(price),
+        stock: parseInt(stock),
+        image: image || undefined  // ✅ Solo actualizar imagen si se envía nueva
+      },
+      { 
+        new: true,           // ✅ Devuelve el documento actualizado
+        runValidators: true  // ✅ Ejecuta validaciones del schema
+      }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    res.json({ 
+      message: "Producto actualizado correctamente", 
+      product: updatedProduct 
+    });
+
+  } catch (error) {
+    console.error("Error actualizando producto:", error);
+    res.status(500).json({ message: "Error al actualizar producto", error: error.message });
+  }
+});
+
+// ==========================
+// ✅ ELIMINAR PRODUCTO (DELETE) ← AGREGADO
+// ==========================
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    res.json({ message: "Producto eliminado correctamente" });
+
+  } catch (error) {
+    console.error("Error eliminando producto:", error);
+    res.status(500).json({ message: "Error al eliminar producto", error: error.message });
   }
 });
 
