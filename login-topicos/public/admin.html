@@ -2,136 +2,91 @@
 <html lang="es">
 
 <head>
-
-<meta charset="UTF-8">
-<title>Anime Store Admin</title>
-
-<link rel="stylesheet" href="admin.css">
-
+  <meta charset="UTF-8">
+  <title>Anime Store Admin</title>
+  <link rel="stylesheet" href="admin.css">
 </head>
-
 
 <body>
 
 <div class="admin-container">
 
-<!-- SIDEBAR -->
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Anime Admin</h2>
+    <ul>
+      <li onclick="mostrarPanel('dashboard')">📊 Dashboard</li>
+      <li onclick="mostrarPanel('productos')">🛒 Productos</li>
+      <li onclick="mostrarPanel('carrusel')">🎞 Carrusel</li>
+      <li onclick="mostrarPanel('chatbot')">🤖 Chatbot</li>
+      <li onclick="logout()">🚪 Salir</li>
+    </ul>
+  </div>
 
-<div class="sidebar">
+  <!-- CONTENIDO -->
+  <div class="main">
+    <h1>Panel de Administración</h1>
 
-<h2>Anime Admin</h2>
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="panel">
+      <div class="cards">
+        <div class="card">
+          <h3>Productos</h3>
+          <p id="totalProductos">0</p>
+        </div>
+        <div class="card">
+          <h3>Usuarios</h3>
+          <p id="totalUsuarios">0</p>
+        </div>
+        <div class="card">
+          <h3>Preguntas Bot</h3>
+          <p id="totalPreguntas">0</p>
+        </div>
+      </div>
+    </div>
 
-<ul>
+    <!-- PRODUCTOS -->
+    <div id="productos" class="panel hidden">
+      <h2>Crear Producto</h2>
 
-<li onclick="mostrarPanel('dashboard')">📊 Dashboard</li>
+      <form id="productForm">
+        <input type="text" id="name" placeholder="Nombre" required>
+        <input type="number" id="price" placeholder="Precio" step="0.01" required>
+        <input type="number" id="stock" placeholder="Stock" required>
+        <input type="file" id="image" accept="image/*">
+        
+        <!-- ✅ CORREGIDO: display:none inicial -->
+        <img id="preview" style="display:none; max-width:200px; margin-top:10px;">
+        
+        <!-- ✅ AGREGADO: Elemento para mensajes (ESTO CAUSABA EL ERROR) -->
+        <div id="message" class="message-box"></div>
+        
+        <button type="submit">Crear Producto</button>
+      </form>
 
-<li onclick="mostrarPanel('productos')">🛒 Productos</li>
+      <h2>Lista de Productos</h2>
+      <div id="productList"></div>
+    </div>
 
-<li onclick="mostrarPanel('carrusel')">🎞 Carrusel</li>
+    <!-- CARRUSEL -->
+    <div id="carrusel" class="panel hidden">
+      <h2>Administrar Carrusel</h2>
+      <input type="file" id="carouselImage" accept="image/*">
+      <button onclick="subirImagenCarrusel()">Subir Imagen</button>
+      <div id="carouselList"></div>
+    </div>
 
-<li onclick="mostrarPanel('chatbot')">🤖 Chatbot</li>
+    <!-- CHATBOT -->
+    <div id="chatbot" class="panel hidden">
+      <h2>Preguntas que el Bot no conoce</h2>
+      <ul id="questionsList"></ul>
+    </div>
 
-<li onclick="logout()">🚪 Salir</li>
-
-</ul>
-
-</div>
-
-
-<!-- CONTENIDO -->
-
-<div class="main">
-
-<h1>Panel de Administración</h1>
-
-
-<!-- DASHBOARD -->
-
-<div id="dashboard" class="panel">
-
-<div class="cards">
-
-<div class="card">
-<h3>Productos</h3>
-<p id="totalProductos">0</p>
-</div>
-
-<div class="card">
-<h3>Usuarios</h3>
-<p id="totalUsuarios">0</p>
-</div>
-
-<div class="card">
-<h3>Preguntas Bot</h3>
-<p id="totalPreguntas">0</p>
-</div>
-
-</div>
-
-</div>
-
-
-<!-- PRODUCTOS -->
-
-<div id="productos" class="panel hidden">
-
-<h2>Crear Producto</h2>
-
-<form id="productForm">
-
-<input type="text" id="name" placeholder="Nombre">
-
-<input type="number" id="price" placeholder="Precio">
-
-<input type="number" id="stock" placeholder="Stock">
-
-<input type="file" id="image">
-
-<img id="preview">
-
-<button type="submit">Crear Producto</button>
-
-</form>
-
-<h2>Lista de Productos</h2>
-
-<div id="productList"></div>
-
-</div>
-
-
-<!-- CARRUSEL -->
-
-<div id="carrusel" class="panel hidden">
-
-<h2>Administrar Carrusel</h2>
-
-<input type="file" id="carouselImage">
-
-<button onclick="subirImagenCarrusel()">Subir Imagen</button>
-
-<div id="carouselList"></div>
-
-</div>
-
-
-<!-- CHATBOT -->
-
-<div id="chatbot" class="panel hidden">
-
-<h2>Preguntas que el Bot no conoce</h2>
-
-<ul id="questionsList"></ul>
-
-</div>
-
-
-</div>
+  </div>
 
 </div>
 
 <script src="admin.js"></script>
 
 </body>
-
 </html>

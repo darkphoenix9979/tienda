@@ -1,176 +1,176 @@
-// 🔒 seguridad admin
+// 🔒 Seguridad admin
 if(localStorage.getItem("role") !== "admin"){
   window.location.href = "login.html";
 }
 
+// Referencias a elementos
 const form = document.getElementById("productForm");
 const preview = document.getElementById("preview");
 const imageInput = document.getElementById("image");
 const message = document.getElementById("message");
 
-// Variable para controlar si estamos editando (nuevo)
+// Estado de edición
 let editingProductId = null;
+
+// Función segura para mensajes
+function setMessage(text) {
+  if(message) {
+    message.innerText = text;
+    message.style.display = text ? 'block' : 'none';
+  }
+}
 
 // ==========================
 // PREVIEW IMAGEN
 // ==========================
-imageInput.addEventListener("change", () => {
-  const file = imageInput.files[0];
-  if(file){
-    preview.src = URL.createObjectURL(file);
-    preview.style.display = "block";
-  }
-});
+if(imageInput) {
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+    if(file && preview){
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+  });
+}
 
 // ==========================
 // CREAR / EDITAR PRODUCTO
 // ==========================
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+if(form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const name = document.getElementById("name").value.trim();
-  // ✅ FIX: Convertir a números para que el backend los reciba correctamente
-  const price = parseFloat(document.getElementById("price").value);
-  const stock = parseInt(document.getElementById("stock").value);
-  const file = imageInput.files[0];
+    const nameInput = document.getElementById("name");
+    const priceInput = document.getElementById("price");
+    const stockInput = document.getElementById("stock");
+    
+    if(!nameInput || !priceInput || !stockInput) {
+      setMessage("❌ Error: Formularios no encontrados");
+      return;
+    }
 
-  // Validaciones básicas
-  if(!name) {
-    message.innerText = "❌ El nombre es obligatorio";
-    return;
-  }
-  if(isNaN(price) || price <= 0) {
-    message.innerText = "❌ Precio inválido";
-    return;
-  }
-  if(isNaN(stock) || stock < 0) {
-    message.innerText = "❌ Stock inválido";
-    return;
-  }
+    const name = nameInput.value.trim();
+    const price = parseFloat(priceInput.value);
+    const stock = parseInt(stockInput.value);
+    const file = imageInput?.files[0];
 
-  try {
-    let imageUrl = null;
+    if(!name) {
+      setMessage("❌ El nombre es obligatorio");
+      return;
+    }
+    if(isNaN(price) || price <= 0) {
+      setMessage("❌ Precio inválido");
+      return;
+    }
+    if(isNaN(stock) || stock < 0) {
+      setMessage("❌ Stock inválido");
+      return;
+    }
 
-    // Solo subir imagen si hay una nueva seleccionada
-    if(file){
-      message.innerText = "📤 Subiendo imagen...";
-      
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "anime_store");
+    try {
+      let imageUrl = null;
 
-      const cloudResponse = await fetch(
-        "https://api.cloudinary.com/v1_1/dvmkwrelz/image/upload",
-        { method: "POST", body: formData }
-      );
+      if(file){
+        setMessage("📤 Subiendo imagen...");
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "anime_store");
 
-      if(!cloudResponse.ok) {
-        const errorData = await cloudResponse.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || "Error al subir imagen");
+        const cloudResponse = await fetch(
+          "https://api.cloudinary.com/v1_1/dvmkwrelz/image/upload",
+          { method: "POST", body: formData }
+        );
+
+        if(!cloudResponse.ok) {
+          const errorData = await cloudResponse.json().catch(() => ({}));
+          throw new Error(errorData.error?.message || "Error al subir imagen");
+        }
+
+        const cloudData = await cloudResponse.json();
+        imageUrl = cloudData.secure_url;
       }
 
-      const cloudData = await cloudResponse.json();
-      imageUrl = cloudData.secure_url;
+      setMessage(editingProductId ? "✏️ Actualizando producto..." : "💾 Guardando producto...");
+
+      const productData = { name, price, stock };
+      
+      if(imageUrl) {
+        productData.image = imageUrl;
+      } else if(editingProductId) {
+        const currentImage = document.getElementById("currentImageUrl")?.value;
+        if(currentImage) productData.image = currentImage;
+      }
+
+      const method = editingProductId ? "PUT" : "POST";
+      const url = editingProductId ? `/api/products/${editingProductId}` : "/api/products";
+
+      const productResponse = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productData)
+      });
+
+      const data = await productResponse.json();
+
+      if(!productResponse.ok) throw new Error(data.message || "Error en la operación");
+
+      setMessage(editingProductId ? "✅ Producto actualizado" : "✅ Producto creado");
+      
+      form.reset();
+      if(preview) preview.style.display = "none";
+      editingProductId = null;
+      
+      const hiddenInput = document.getElementById("currentImageUrl");
+      if(hiddenInput) hiddenInput.remove();
+      
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if(submitBtn) submitBtn.textContent = "Crear Producto";
+      
+      if(typeof cargarProductos === 'function') await cargarProductos();
+      if(typeof cargarDashboard === 'function') await cargarDashboard();
+
+    } catch(error) {
+      console.error("Error:", error);
+      setMessage("❌ " + error.message);
     }
-
-    message.innerText = editingProductId ? "✏️ Actualizando producto..." : "💾 Guardando producto...";
-
-    // Preparar datos del producto
-    const productData = {
-      name,
-      price,      // ✅ Ahora es número
-      stock       // ✅ Ahora es número
-    };
-    
-    // Incluir imagen: nueva subida O la existente si no se cambió
-    if(imageUrl) {
-      productData.image = imageUrl;
-    } else if(editingProductId) {
-      // Si estamos editando y no hay nueva imagen, mantener la actual
-      const currentImage = document.getElementById("currentImageUrl")?.value;
-      if(currentImage) productData.image = currentImage;
-    }
-
-    // Determinar método y URL según si es edición o creación
-    const method = editingProductId ? "PUT" : "POST";
-    const url = editingProductId ? `/api/products/${editingProductId}` : "/api/products";
-
-    const productResponse = await fetch(url, {
-      method: method,
-      headers: {
-        "Content-Type": "application/json"
-        // Si tu backend usa JWT, descomenta:
-        // "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify(productData)
-    });
-
-    const data = await productResponse.json();
-
-    if(!productResponse.ok) throw new Error(data.message || "Error en la operación");
-
-    message.innerText = editingProductId ? "✅ Producto actualizado" : "✅ Producto creado";
-    
-    // Resetear formulario y estado de edición
-    form.reset();
-    preview.style.display = "none";
-    editingProductId = null;
-    
-    // Ocultar input temporal de imagen si existe
-    const hiddenInput = document.getElementById("currentImageUrl");
-    if(hiddenInput) hiddenInput.remove();
-    
-    // Restaurar texto del botón
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if(submitBtn) submitBtn.textContent = "➕ Crear Producto";
-    
-    // Recargar lista y dashboard
-    await cargarProductos();
-    await cargarDashboard(); // ✅ Actualizar contadores
-
-  } catch(error) {
-    console.error("Error:", error);
-    message.innerText = "❌ " + error.message;
-  }
-});
+  });
+}
 
 // ==========================
-// CARGAR PRODUCTOS (con botón de editar)
+// CARGAR PRODUCTOS
 // ==========================
 async function cargarProductos(){
   try {
+    const list = document.getElementById("productList");
+    if(!list) return;
+
     const res = await fetch("/api/products");
     if(!res.ok) throw new Error("Error al cargar productos");
     
     const productos = await res.json();
-    const list = document.getElementById("productList");
-    
-    // Solo limpiar si el elemento existe
-    if(list) {
-      list.innerHTML = "";
+    list.innerHTML = "";
 
-      if(!productos || productos.length === 0) {
-        list.innerHTML = "<p class='text-muted'>No hay productos registrados</p>";
-        return;
-      }
-
-      productos.forEach(p => {
-        const div = document.createElement("div");
-        div.classList.add("product-item");
-        // ✅ Agregar botón de editar con los datos necesarios
-        div.innerHTML = `
-          <img src="${p.image || 'placeholder.png'}" width="80" alt="${p.name}" onerror="this.src='placeholder.png'">
-          <span><strong>${p.name}</strong></span>
-          <span>$${parseFloat(p.price).toFixed(2)}</span>
-          <span>Stock: ${p.stock}</span>
-          <div style="display:flex; gap:5px;">
-            <button onclick="editarProducto('${p._id}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, ${p.stock}, '${p.image}')">✏️</button>
-            <button onclick="eliminarProducto('${p._id}')">🗑️</button>
-          </div>
-        `;
-        list.appendChild(div);
-      });
+    if(!productos || productos.length === 0) {
+      list.innerHTML = "<p class='text-muted'>No hay productos registrados</p>";
+      return;
     }
+
+    productos.forEach(p => {
+      const div = document.createElement("div");
+      div.classList.add("product-item");
+      div.innerHTML = `
+        <img src="${p.image || 'placeholder.png'}" alt="${p.name}" onerror="this.src='placeholder.png'">
+        <span><strong>${p.name}</strong></span>
+        <span>$${parseFloat(p.price).toFixed(2)}</span>
+        <span>Stock: ${p.stock}</span>
+        <div style="display:flex; gap:5px;">
+          <button onclick="editarProducto('${p._id}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, ${p.stock}, '${p.image}')">✏️</button>
+          <button onclick="eliminarProducto('${p._id}')">🗑️</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
   } catch(error) {
     console.error("Error cargando productos:", error);
     const list = document.getElementById("productList");
@@ -179,39 +179,41 @@ async function cargarProductos(){
 }
 
 // ==========================
-// EDITAR PRODUCTO (NUEVA FUNCIÓN)
+// EDITAR PRODUCTO
 // ==========================
 function editarProducto(id, name, price, stock, image) {
-  // Llenar el formulario con los datos del producto
-  document.getElementById("name").value = name;
-  document.getElementById("price").value = price;
-  document.getElementById("stock").value = stock;
+  if(!form) return;
   
-  // Guardar URL actual de la imagen en input hidden temporal
-  const hiddenInput = document.createElement("input");
-  hiddenInput.type = "hidden";
-  hiddenInput.id = "currentImageUrl";
+  const nameInput = document.getElementById("name");
+  const priceInput = document.getElementById("price");
+  const stockInput = document.getElementById("stock");
+  
+  if(!nameInput || !priceInput || !stockInput) return;
+  
+  nameInput.value = name;
+  priceInput.value = price;
+  stockInput.value = stock;
+  
+  let hiddenInput = document.getElementById("currentImageUrl");
+  if(!hiddenInput) {
+    hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.id = "currentImageUrl";
+    form.appendChild(hiddenInput);
+  }
   hiddenInput.value = image;
-  form.appendChild(hiddenInput);
   
-  // Mostrar preview de la imagen actual
   if(preview) {
     preview.src = image;
     preview.style.display = "block";
   }
   
-  // Cambiar texto del botón submit
   const submitBtn = form.querySelector('button[type="submit"]');
   if(submitBtn) submitBtn.textContent = "✏️ Actualizar";
   
-  // Guardar ID para saber que estamos editando
   editingProductId = id;
-  
-  // Mensaje de estado
-  if(message) message.innerText = "📝 Editando: " + name;
-  
-  // Scroll suave al formulario
-  if(form) form.scrollIntoView({ behavior: "smooth" });
+  setMessage("📝 Editando: " + name);
+  form.scrollIntoView({ behavior: "smooth" });
 }
 
 // ==========================
@@ -221,40 +223,36 @@ async function eliminarProducto(id){
   if(!confirm("¿Eliminar producto?")) return;
 
   try {
-    const response = await fetch(`/api/products/${id}`, {
-      method: "DELETE"
-      // Si usas JWT: headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-    });
+    const response = await fetch(`/api/products/${id}`, { method: "DELETE" });
     
     if(!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw new Error(data.message || "Error al eliminar");
     }
     
-    if(message) message.innerText = "🗑️ Producto eliminado";
+    setMessage("🗑️ Producto eliminado");
     
     await cargarProductos();
-    await cargarDashboard(); // ✅ Actualizar contador
+    await cargarDashboard();
     
-    // Si estábamos editando el producto eliminado, resetear
     if(editingProductId === id) {
       form.reset();
       if(preview) preview.style.display = "none";
       editingProductId = null;
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if(submitBtn) submitBtn.textContent = "➕ Crear Producto";
+      const submitBtn = form?.querySelector('button[type="submit"]');
+      if(submitBtn) submitBtn.textContent = "Crear Producto";
       const hiddenInput = document.getElementById("currentImageUrl");
       if(hiddenInput) hiddenInput.remove();
-      if(message) message.innerText = "";
+      setMessage("");
     }
   } catch(error) {
     console.error("Error eliminando:", error);
-    if(message) message.innerText = "❌ " + error.message;
+    setMessage("❌ " + error.message);
   }
 }
 
 // ==========================
-// CARRUSEL (sin cambios en lógica, solo mejora de errores)
+// CARRUSEL
 // ==========================
 async function subirImagenCarrusel(){
   const fileInput = document.getElementById("carouselImage");
@@ -286,7 +284,7 @@ async function subirImagenCarrusel(){
     });
 
     cargarCarruselAdmin();
-    fileInput.value = ""; // reset input
+    fileInput.value = "";
   } catch(error) {
     console.error("Error carrusel:", error);
     alert("❌ Error: " + error.message);
@@ -295,22 +293,22 @@ async function subirImagenCarrusel(){
 
 async function cargarCarruselAdmin(){
   try {
+    const list = document.getElementById("carouselList");
+    if(!list) return;
+    
     const response = await fetch("/api/carousel");
     const images = await response.json();
-    const list = document.getElementById("carouselList");
+    list.innerHTML = "";
     
-    if(list) {
-      list.innerHTML = "";
-      images.forEach(img => {
-        const div = document.createElement("div");
-        div.classList.add("carousel-item");
-        div.innerHTML = `
-          <img src="${img.image}" width="120">
-          <button onclick="eliminarImagen('${img._id}')">Eliminar</button>
-        `;
-        list.appendChild(div);
-      });
-    }
+    images.forEach(img => {
+      const div = document.createElement("div");
+      div.classList.add("carousel-item");
+      div.innerHTML = `
+        <img src="${img.image}" width="120">
+        <button onclick="eliminarImagen('${img._id}')">Eliminar</button>
+      `;
+      list.appendChild(div);
+    });
   } catch(error) {
     console.error("Error cargando carrusel:", error);
   }
@@ -328,72 +326,70 @@ async function eliminarImagen(id){
 }
 
 // ==========================
-// PREGUNTAS CHATBOT (sin cambios)
+// CHATBOT
 // ==========================
 async function cargarPreguntas(){
   try{
+    const list = document.getElementById("questionsList");
+    if(!list) return;
+    
     const res = await fetch("/unknown_questions.json");
     const preguntas = await res.json();
-    const list = document.getElementById("questionsList");
+    list.innerHTML = "";
     
-    if(list) {
-      list.innerHTML="";
-      preguntas.forEach(p => {
-        const li = document.createElement("li");
-        li.textContent = p;
-        list.appendChild(li);
-      });
-    }
+    preguntas.forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = p;
+      list.appendChild(li);
+    });
   } catch{
     console.log("No hay preguntas registradas");
   }
 }
 
 // ==========================
-// NAVEGACIÓN ENTRE PANELES (FUNCIONALIDAD ORIGINAL - SIN CAMBIOS)
+// NAVEGACIÓN
 // ==========================
 function mostrarPanel(panel){
-  // Ocultar todos los paneles
   document.querySelectorAll(".panel").forEach(p => {
     p.classList.add("hidden")
   })
-  // Mostrar el seleccionado
   const panelToShow = document.getElementById(panel);
   if(panelToShow) {
     panelToShow.classList.remove("hidden")
   }
 }
 
-// ==========================
-// LOGOUT (sin cambios)
-// ==========================
 function logout(){
   localStorage.clear()
-  window.location.href="login.html"
+  window.location.href = "login.html"
 }
 
 // ==========================
-// DASHBOARD CONTADORES (sin cambios en lógica)
+// DASHBOARD
 // ==========================
 async function cargarDashboard(){
   try{
-    // PRODUCTOS
-    const resProductos = await fetch("/api/products");
-    const productos = await resProductos.json();
     const totalProductosEl = document.getElementById("totalProductos");
-    if(totalProductosEl) totalProductosEl.innerText = productos.length;
+    if(totalProductosEl) {
+      const resProductos = await fetch("/api/products");
+      const productos = await resProductos.json();
+      totalProductosEl.innerText = productos.length;
+    }
 
-    // USUARIOS
-    const resUsuarios = await fetch("/api/users");
-    const usuarios = await resUsuarios.json();
     const totalUsuariosEl = document.getElementById("totalUsuarios");
-    if(totalUsuariosEl) totalUsuariosEl.innerText = usuarios.length;
+    if(totalUsuariosEl) {
+      const resUsuarios = await fetch("/api/users");
+      const usuarios = await resUsuarios.json();
+      totalUsuariosEl.innerText = usuarios.length;
+    }
 
-    // PREGUNTAS BOT
-    const resPreguntas = await fetch("/unknown_questions.json");
-    const preguntas = await resPreguntas.json();
     const totalPreguntasEl = document.getElementById("totalPreguntas");
-    if(totalPreguntasEl) totalPreguntasEl.innerText = preguntas.length;
+    if(totalPreguntasEl) {
+      const resPreguntas = await fetch("/unknown_questions.json");
+      const preguntas = await resPreguntas.json();
+      totalPreguntasEl.innerText = preguntas.length;
+    }
 
   } catch(error){
     console.error("Error cargando dashboard", error);
@@ -401,10 +397,11 @@ async function cargarDashboard(){
 }
 
 // ==========================
-// INICIO - MANTENIENDO TU ESTRUCTURA ORIGINAL
+// INICIO
 // ==========================
-// ✅ Ejecutar al cargar - SIN envolver en DOMContentLoaded para no romper tu flujo
-cargarProductos();
-cargarCarruselAdmin();
-cargarPreguntas();
-cargarDashboard();
+document.addEventListener("DOMContentLoaded", () => {
+  if(document.getElementById("productList")) cargarProductos();
+  if(document.getElementById("carouselList")) cargarCarruselAdmin();
+  if(document.getElementById("questionsList")) cargarPreguntas();
+  if(document.getElementById("totalProductos") || document.getElementById("totalUsuarios")) cargarDashboard();
+});

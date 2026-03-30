@@ -1,141 +1,182 @@
-body{
-margin:0;
-font-family:Arial;
-background:#f4f6f9;
+/* ==================== GLOBAL ==================== */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
 }
 
-.admin-container{
-display:flex;
-height:100vh;
+/* ==================== CONTAINER ==================== */
+.admin-container {
+  display: flex;
+  height: 100vh;
 }
 
-/* SIDEBAR */
-
-.sidebar{
-width:230px;
-background:#1f2937;
-color:white;
-padding:20px;
+/* ==================== SIDEBAR ==================== */
+.sidebar {
+  width: 230px;
+  background: #1f2937;
+  color: white;
+  padding: 20px;
 }
 
-.sidebar h2{
-margin-bottom:30px;
+.sidebar h2 {
+  margin-bottom: 30px;
+  font-size: 22px;
 }
 
-.sidebar ul{
-list-style:none;
-padding:0;
+.sidebar ul {
+  list-style: none;
+  padding: 0;
 }
 
-.sidebar li{
-padding:12px;
-cursor:pointer;
-border-radius:5px;
-margin-bottom:5px;
+.sidebar li {
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  transition: background 0.2s;
 }
 
-.sidebar li:hover{
-background:#374151;
+.sidebar li:hover {
+  background: #374151;
 }
 
-
-/* MAIN */
-
-.main{
-flex:1;
-padding:30px;
-overflow:auto;
+/* ==================== MAIN ==================== */
+.main {
+  flex: 1;
+  padding: 30px;
+  overflow: auto;
 }
 
-
-.panel{
-margin-top:20px;
+.main h1 {
+  margin-top: 0;
+  color: #1f2937;
 }
 
-.hidden{
-display:none;
+.main h2 {
+  color: #374151;
+  margin-bottom: 15px;
 }
 
-
-/* CARDS */
-
-.cards{
-display:flex;
-gap:20px;
+/* ==================== PANELS ==================== */
+.panel {
+  margin-top: 20px;
 }
 
-.card{
-background:white;
-padding:20px;
-border-radius:10px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-width:200px;
+.hidden {
+  display: none !important;
 }
 
-.card h3{
-margin:0;
+/* ==================== DASHBOARD CARDS ==================== */
+.cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-.card p{
-font-size:30px;
-margin-top:10px;
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  width: 200px;
 }
 
-
-/* FORM */
-
-form{
-background:white;
-padding:20px;
-border-radius:10px;
-margin-bottom:20px;
+.card h3 {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
 }
 
-form input{
-display:block;
-margin-bottom:10px;
-padding:10px;
-width:250px;
+.card p {
+  font-size: 30px;
+  margin-top: 10px;
+  color: #1f2937;
+  font-weight: bold;
 }
 
-form button{
-padding:10px 15px;
-background:#2563eb;
-color:white;
-border:none;
-border-radius:5px;
-cursor:pointer;
+/* ==================== FORMULARIOS ==================== */
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-form button:hover{
-background:#1d4ed8;
+form input {
+  display: block;
+  margin-bottom: 10px;
+  padding: 10px;
+  width: 250px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
 }
 
-
-/* PRODUCTOS */
-
-.product-item{
-background:white;
-padding:10px;
-margin-bottom:10px;
-border-radius:5px;
-display:flex;
-align-items:center;
-gap:10px;
+form input:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 
-.product-item img{
-width:60px;
-border-radius:5px;
+form button {
+  padding: 10px 15px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
 }
 
-/* Botones de acción en productos */
+form button:hover {
+  background: #1d4ed8;
+}
+
+/* ==================== MENSAJES DE ESTADO ==================== */
+.message-box {
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 14px;
+  display: none;
+}
+
+.message-box:not(:empty) {
+  display: block;
+}
+
+/* Colores según el tipo de mensaje */
+.message-box {
+  background: #e3f2fd;
+  color: #1976D2;
+  border: 1px solid #bbdefb;
+}
+
+/* ==================== PRODUCTOS ==================== */
 .product-item {
+  background: white;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-bottom: 1px solid #eee;
+  gap: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.product-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.product-item span {
+  flex: 1;
+  color: #374151;
 }
 
 .product-item button {
@@ -144,31 +185,125 @@ border-radius:5px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  background: #e0e0e0;
   transition: background 0.2s;
 }
 
-.product-item button:hover {
-  background: #bdbdbd;
-}
-
-.product-item button:first-child {
+.product-item button:first-of-type {
   background: #2196F3;
   color: white;
 }
-.product-item button:first-child:hover {
+
+.product-item button:first-of-type:hover {
   background: #1976D2;
 }
 
-.product-item button:last-child {
+.product-item button:last-of-type {
   background: #f44336;
   color: white;
 }
-.product-item button:last-child:hover {
+
+.product-item button:last-of-type:hover {
   background: #d32f2f;
 }
 
-/* Utilidad para ocultar paneles */
-.hidden {
-  display: none !important;
+/* ==================== CARRUSEL ==================== */
+#carouselList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.carousel-item {
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.carousel-item img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.carousel-item button {
+  padding: 4px 8px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.carousel-item button:hover {
+  background: #d32f2f;
+}
+
+/* ==================== CHATBOT ==================== */
+#questionsList {
+  list-style: none;
+  padding: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#questionsList li {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  color: #374151;
+}
+
+#questionsList li:last-child {
+  border-bottom: none;
+}
+
+#questionsList:empty::after {
+  content: "No hay preguntas registradas";
+  display: block;
+  padding: 15px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* ==================== UTILIDADES ==================== */
+.text-muted {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.error {
+  color: #f44336;
+  font-weight: bold;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .admin-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+  }
+  
+  .cards {
+    flex-direction: column;
+  }
+  
+  .card {
+    width: 100%;
+  }
+  
+  form input {
+    width: 100%;
+  }
 }
