@@ -11,8 +11,134 @@
 //});
 
 // ==========================
-// CARRUSEL
+// NOTIFICACIÓN FLOTANTE (TOAST) - MEJORA #1
 // ==========================
+function showNotification(message, type = "success") {
+    // Eliminar notificaciones anteriores
+    const existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Agregar animación CSS si no existe
+    if (!document.querySelector('#toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(150px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                to { opacity: 0; transform: translateY(-10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Auto-eliminar después de 3 segundos
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ==========================
+// GENERAR TICKET DE COMPRA - MEJORA #4
+// ==========================
+function generateTicket(cart) {
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const fecha = new Date().toLocaleString('es-MX', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    });
+
+    const ticket = `
+╔════════════════════════════════╗
+║     🛒 TICKET DE COMPRA        ║
+╠════════════════════════════════╣
+║ Fecha: ${fecha}
+║ Usuario: ${localStorage.getItem("username") || "Invitado"}
+╠════════════════════════════════╣
+║ DETALLES:
+╟────────────────────────────────╢
+${cart.map(item => 
+    `║ • ${item.name.substring(0, 25).padEnd(25)} ║
+║   $${item.price} x ${item.quantity} = $${(item.price * item.quantity).toFixed(2)} MXN`
+).join('\n')}
+╠════════════════════════════════╣
+║ TOTAL: $${total.toFixed(2)} MXN
+╚════════════════════════════════╝
+    `;
+
+    // Mostrar en modal
+    const modal = document.createElement('div');
+    modal.id = 'ticketModal';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7); display: flex; justify-content: center;
+        align-items: center; z-index: 10000; font-family: monospace;
+    `;
+    modal.innerHTML = `
+        <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; text-align: left;">
+            <pre style="white-space: pre-wrap; font-size: 14px; line-height: 1.4; margin: 0;">${ticket}</pre>
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="imprimirTicket()" style="margin: 5px; padding: 8px 16px; background: #22c55e; color: white; border: none; border-radius: 5px; cursor: pointer;">🖨️ Imprimir</button>
+                <button onclick="descargarTicket()" style="margin: 5px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer;">💾 Descargar</button>
+                <button onclick="cerrarTicket()" style="margin: 5px; padding: 8px 16px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer;">✖ Cerrar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Guardar para imprimir/descargar
+    window.currentTicket = { ticket, total, fecha, cart };
+}
+
+function cerrarTicket() {
+    const modal = document.getElementById('ticketModal');
+    if (modal) modal.remove();
+}
+
+function imprimirTicket() {
+    if (!window.currentTicket) return;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html><head><title>Ticket de Compra</title>
+        <style>body{font-family:monospace; white-space:pre; padding:20px;}</style>
+        </head><body>${window.currentTicket.ticket}</body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function descargarTicket() {
+    if (!window.currentTicket) return;
+    const blob = new Blob([window.currentTicket.ticket], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ticket-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 // ==========================
 // CARRUSEL
 // ==========================
@@ -165,13 +291,15 @@ function irLogin() {
 
 
 // ==========================
-// AGREGAR AL CARRITO
+// AGREGAR AL CARRITO - MEJORA #1 (Notificación flotante)
 // ==========================
 function addToCart(product) {
 
   if (!localStorage.getItem("token")) {
-    alert("Debes iniciar sesión para comprar");
-    window.location.href = "login.html";
+    showNotification("⚠️ Debes iniciar sesión para comprar", "error");
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 1500);
     return;
   }
 
@@ -193,7 +321,8 @@ function addToCart(product) {
 
   localStorage.setItem("cart", JSON.stringify(cart));
 
-  alert("Producto agregado al carrito 🛒");
+  // ✅ MEJORA #1: Notificación flotante en lugar de alert
+  showNotification("✅ Producto agregado al carrito");
 
   cargarCarrito();
   cargarCarritoModal();
@@ -202,8 +331,6 @@ function addToCart(product) {
 // ==========================
 // MOSTRAR CARRITO (SECCIÓN)
 // ==========================
-// ESTE CARRITO ES EL QUE APARECE ABAJO EN LA PÁGINA
-// Si decides usar solo el modal puedes eliminarlo después
 function cargarCarrito(){
 
 const contenedor = document.getElementById("carrito");
@@ -259,14 +386,13 @@ cartCount.innerText = totalItems;
 const totalHTML = document.createElement("div");
 
 totalHTML.innerHTML = `
-<h3>Total: $${total} MXN</h3>
+<h3>Total: $${total.toFixed(2)} MXN</h3>
 <button onclick="simularCompra()">Comprar</button>
 `;
 
 contenedor.appendChild(totalHTML);
 
 }
-
 
 
 // ==========================
@@ -348,7 +474,7 @@ contenedor.appendChild(div);
 });
 
 if(totalText){
-totalText.innerText = "Total: $" + total + " MXN";
+totalText.innerText = "Total: $" + total.toFixed(2) + " MXN";
 }
 
 }
@@ -393,23 +519,49 @@ cargarCarritoModal();
 
 
 // ==========================
-// SIMULAR COMPRA
+// SIMULAR COMPRA - MEJORAS #2 y #4
 // ==========================
-function simularCompra(){
+async function simularCompra(){
 
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 if(cart.length === 0){
-alert("El carrito está vacío");
-return;
+    showNotification("⚠️ El carrito está vacío", "error");
+    return;
 }
 
-alert("Compra realizada con éxito 🎉");
+try {
+    // ✅ MEJORA #2: Actualizar stock de cada producto en la BD
+    for (const item of cart) {
+        const response = await fetch(`/api/products/${item._id}/update-stock`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: item.quantity })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Error actualizando stock");
+        }
+    }
 
-localStorage.removeItem("cart");
+    // ✅ MEJORA #4: Generar ticket antes de vaciar carrito
+    generateTicket(cart);
 
-cargarCarrito();
-cargarCarritoModal();
+    // ✅ Vaciar carrito
+    localStorage.removeItem("cart");
+    cargarCarrito();
+    cargarCarritoModal();
+    
+    showNotification("🎉 Compra realizada con éxito");
+
+    // ✅ Recargar productos para ver stock actualizado
+    cargarProductos();
+
+} catch (error) {
+    console.error("Error en compra:", error);
+    showNotification("❌ Error al procesar la compra", "error");
+}
 
 }
 

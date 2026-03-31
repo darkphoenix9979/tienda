@@ -107,4 +107,32 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// ✅ AGREGAR EN: routes/products.js
+
+// Actualizar stock después de compra
+router.put('/:id/update-stock', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    if (product.stock < quantity) {
+      return res.status(400).json({ message: "Stock insuficiente" });
+    }
+
+    product.stock -= quantity;
+    await product.save();
+
+    res.json({ message: "Stock actualizado", stock: product.stock });
+
+  } catch (error) {
+    console.error("Error actualizando stock:", error);
+    res.status(500).json({ message: "Error del servidor" });
+  }
+});
+
 module.exports = router;
