@@ -428,13 +428,24 @@ margin-top:20px;
    ========================== */
 .floating-buttons {
     position: fixed;
-    bottom: 25px;
-    right: 25px;
+    bottom: 30px;
+    right: 30px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     z-index: 9999;
+}
+
+#theme-toggle.floating-btn {
+    order: 1;
+    z-index: 9997;
+    transform: translateX(5px);
+}
+
+#chatButton.floating-btn {
+    order: 2;
+    z-index: 9998;
 }
 
 .floating-btn {
