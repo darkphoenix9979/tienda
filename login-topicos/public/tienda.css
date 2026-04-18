@@ -433,12 +433,12 @@ margin-top:20px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 15px; /* 👈 Espacio limpio entre botones */
+    gap: 15px;
     z-index: 9999;
 }
 
 .floating-btn {
-    position: relative;
+    position: relative; /* 👈 Necesario para que z-index funcione estable */
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -452,7 +452,16 @@ margin-top:20px;
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     transition: transform 0.2s ease, background-color 0.3s ease;
-    z-index: 1; /* 👈 Misma profundidad para ambos */
+}
+
+/* Tema: a la izquierda y visualmente "detrás" */
+#theme-toggle.floating-btn {
+    z-index: 1;
+}
+
+/* Chatbot: a la derecha y "adelante" */
+#chatButton.floating-btn {
+    z-index: 1;
 }
 
 .floating-btn:hover {
