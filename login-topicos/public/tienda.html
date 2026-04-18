@@ -101,51 +101,6 @@
 <script src="tienda.js"></script>
 <script src="chatbot.js"></script>
 
-<!-- 2. AL FINAL: Script del tema (después de que todo cargue) -->
-<script>
-(function() {
-    // Esperar a que TODO el DOM esté listo
-    function initTheme() {
-        const toggle = document.getElementById('theme-toggle');
-        const root = document.documentElement;
-        
-        if (!toggle) {
-            console.error('❌ ERROR: No se encontró #theme-toggle');
-            return;
-        }
-
-        // Cargar tema guardado
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'light') {
-            root.setAttribute('data-theme', 'light');
-            toggle.textContent = '🌙';
-        } else {
-            toggle.textContent = '☀️';
-        }
-
-        // Evento Click
-        toggle.addEventListener('click', function() {
-            const isDark = root.getAttribute('data-theme') !== 'light';
-            if (isDark) {
-                root.setAttribute('data-theme', 'light');
-                localStorage.setItem('theme', 'light');
-                toggle.textContent = '🌙';
-            } else {
-                root.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'dark');
-                toggle.textContent = '☀️';
-            }
-        });
-    }
-
-    // Ejecutar cuando el DOM esté completamente cargado
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTheme);
-    } else {
-        initTheme();
-    }
-})();
-</script>
 
 </body>
 </html>

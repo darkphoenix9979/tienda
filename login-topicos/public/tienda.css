@@ -471,9 +471,6 @@ body {
   background: var(--accent-secondary);
 }
 
-/* ==========================
-   FOOTER
-   ========================== */
 /* Footer con variables */
 .site-footer {
     margin-top: 60px;
@@ -485,6 +482,18 @@ body {
 }
 
 /* ==========================
+   FOOTER
+   ========================== */
+footer {
+  margin-top: 60px;
+  padding: 30px;
+  background: var(--bg-tertiary);
+  text-align: center;
+  color: var(--text-muted);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ==========================
    TRANSICIONES GLOBALES
    ========================== */
 *, *::before, *::after {
@@ -493,3 +502,40 @@ body {
               border-color 0.3s ease,
               box-shadow 0.3s ease;
 }
+
+/* ==========================
+   ESTILOS PARA ELEMENTOS DINÁMICOS (JS)
+   ========================== */
+
+/* Ticket Modal */
+.ticket-content {
+    background: var(--bg-card, white);
+    color: var(--text-primary, black);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.ticket-btn {
+    margin: 5px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.ticket-btn:hover {
+    transform: scale(1.05);
+}
+
+.ticket-btn-success { background: var(--toast-success, #22c55e); }
+.ticket-btn-info { background: var(--accent-secondary, #3b82f6); }
+.ticket-btn-close { background: var(--text-muted, #6b7280); }
+
+/* Toast Notifications */
+.toast-notification {
+    transition: background-color 0.3s ease;
+}
+

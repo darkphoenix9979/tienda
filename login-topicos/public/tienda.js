@@ -14,29 +14,30 @@
 // NOTIFICACIÓN FLOTANTE (TOAST) - MEJORA #1
 // ==========================
 function showNotification(message, type = "success") {
-    // Eliminar notificaciones anteriores
     const existing = document.querySelector('.toast-notification');
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
     toast.className = `toast-notification ${type}`;
+    
+    // ✅ Usa variables CSS en lugar de colores fijos
     toast.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        background: ${type === 'success' ? 'var(--toast-success, #22c55e)' : 'var(--toast-error, #ef4444)'};
         color: white;
         padding: 12px 24px;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px var(--shadow-card, rgba(0,0,0,0.15));
         z-index: 9999;
         font-weight: 500;
         animation: slideIn 0.3s ease;
+        transition: background-color 0.3s ease;
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
 
-    // Agregar animación CSS si no existe
     if (!document.querySelector('#toast-styles')) {
         const style = document.createElement('style');
         style.id = 'toast-styles';
@@ -52,7 +53,6 @@ function showNotification(message, type = "success") {
         document.head.appendChild(style);
     }
 
-    // Auto-eliminar después de 3 segundos
     setTimeout(() => {
         toast.style.animation = 'fadeOut 0.3s ease forwards';
         setTimeout(() => toast.remove(), 300);
@@ -87,25 +87,30 @@ ${cart.map(item =>
 ╚════════════════════════════════╝
     `;
 
-    // Mostrar en modal
-    const modal = document.createElement('div');
-    modal.id = 'ticketModal';
-    modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.7); display: flex; justify-content: center;
-        align-items: center; z-index: 10000; font-family: monospace;
-    `;
-    modal.innerHTML = `
-        <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; text-align: left;">
-            <pre style="white-space: pre-wrap; font-size: 14px; line-height: 1.4; margin: 0;">${ticket}</pre>
-            <div style="text-align: center; margin-top: 15px;">
-                <button onclick="imprimirTicket()" style="margin: 5px; padding: 8px 16px; background: #22c55e; color: white; border: none; border-radius: 5px; cursor: pointer;">🖨️ Imprimir</button>
-                <button onclick="descargarTicket()" style="margin: 5px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer;">💾 Descargar</button>
-                <button onclick="cerrarTicket()" style="margin: 5px; padding: 8px 16px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer;">✖ Cerrar</button>
-            </div>
+    // Mostrar en modal// Dentro de generateTicket(), reemplaza la creación del modal por esto:
+
+const modal = document.createElement('div');
+modal.id = 'ticketModal';
+modal.className = 'ticket-modal'; // 👈 Clase para controlar con CSS
+modal.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--modal-overlay, rgba(0,0,0,0.7));
+    display: flex; justify-content: center;
+    align-items: center; z-index: 10000; font-family: monospace;
+    transition: background-color 0.3s ease;
+`;
+
+modal.innerHTML = `
+    <div class="ticket-content" style="padding: 20px; border-radius: 10px; max-width: 400px; text-align: left;">
+        <pre style="white-space: pre-wrap; font-size: 14px; line-height: 1.4; margin: 0; color: var(--text-primary);">${ticket}</pre>
+        <div style="text-align: center; margin-top: 15px; display: flex; gap: 8px; justify-content: center;">
+            <button onclick="imprimirTicket()" class="ticket-btn ticket-btn-success">🖨️ Imprimir</button>
+            <button onclick="descargarTicket()" class="ticket-btn ticket-btn-info">💾 Descargar</button>
+            <button onclick="cerrarTicket()" class="ticket-btn ticket-btn-close">✖ Cerrar</button>
         </div>
-    `;
-    document.body.appendChild(modal);
+    </div>
+`;
+document.body.appendChild(modal);
 
     // Guardar para imprimir/descargar
     window.currentTicket = { ticket, total, fecha, cart };
@@ -591,37 +596,34 @@ function initThemeToggle() {
   const toggle = document.getElementById('theme-toggle');
   const root = document.documentElement;
   
-  // Verificar preferencia guardada
-  const savedTheme = localStorage.getItem('theme');
+  if (!toggle) return;
   
-  // Por defecto: dark (tu diseño actual)
+  const savedTheme = localStorage.getItem('theme');
   if (savedTheme === 'light') {
     root.setAttribute('data-theme', 'light');
-    if (toggle) toggle.textContent = '🌙';
+    toggle.textContent = '🌙';
+  } else {
+    toggle.textContent = '☀️';
   }
-  
-  // Evento del toggle
-  if (toggle) {
-    toggle.addEventListener('click', () => {
-      const isDark = root.getAttribute('data-theme') !== 'light';
-      
-      if (isDark) {
-        root.setAttribute('data-theme', 'light');
-        localStorage.setItem('theme', 'light');
-        toggle.textContent = '🌙';
-        if (typeof showNotification === 'function') {
-          showNotification('☀️ Modo claro activado');
-        }
-      } else {
-        root.removeAttribute('data-theme');
-        localStorage.setItem('theme', 'dark');
-        toggle.textContent = '☀️';
-        if (typeof showNotification === 'function') {
-          showNotification('🌙 Modo nocturno activado');
-        }
+
+  toggle.addEventListener('click', () => {
+    const isDark = root.getAttribute('data-theme') !== 'light';
+    if (isDark) {
+      root.setAttribute('data-theme', 'light');
+      localStorage.setItem('theme', 'light');
+      toggle.textContent = '🌙';
+      if (typeof showNotification === 'function') {
+        showNotification('☀️ Modo claro activado');
       }
-    });
-  }
+    } else {
+      root.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'dark');
+      toggle.textContent = '☀️';
+      if (typeof showNotification === 'function') {
+        showNotification('🌙 Modo nocturno activado');
+      }
+    }
+  });
 }
 
 // Inicializar cuando el DOM esté listo
