@@ -635,133 +635,260 @@ function initThemeToggle() {
 // ⌨️ NAVEGACIÓN POR TECLADO
 // ==========================
 
+// ==========================
+// ⌨️ NAVEGACIÓN DIRECCIONAL CON FLECHAS
+// ==========================
+
 function initKeyboardNavigation() {
-    console.log('⌨️ Navegación por teclado inicializada');
+    console.log('⌨️ Navegación direccional inicializada');
     
-    // 1. Indicadores de foco visibles para accesibilidad
-    const focusableElements = document.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    
-    focusableElements.forEach(el => {
-        el.addEventListener('focus', () => {
-            el.classList.add('keyboard-focus');
+    // Obtener todos los elementos enfocables con sus posiciones
+    function getFocusableElements() {
+        return Array.from(document.querySelectorAll(
+            'button:not([disabled]), ' +
+            '[href]:not([tabindex="-1"]), ' +
+            'input:not([disabled]), ' +
+            'select:not([disabled]), ' +
+            'textarea:not([disabled]), ' +
+            '[tabindex]:not([tabindex="-1"]), ' +
+            '.card, .nav-links span, .cart-icon, .dropdown-item'
+        )).filter(el => {
+            return el.offsetParent !== null && 
+                   getComputedStyle(el).visibility !== 'hidden' &&
+                   getComputedStyle(el).display !== 'none';
         });
-        el.addEventListener('blur', () => {
-            el.classList.remove('keyboard-focus');
-        });
-    });
+    }
     
-    // 2. Atajos de teclado globales
+    // Calcular la posición central de un elemento
+    function getElementCenter(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+            element: el
+        };
+    }
+    
+    // Encontrar el elemento más cercano en una dirección
+    function findElementInDirection(current, direction) {
+        const elements = getFocusableElements().map(getElementCenter);
+        const currentPos = getElementCenter(current);
+        
+        let closest = null;
+        let minDistance = Infinity;
+        
+        elements.forEach(pos => {
+            if (pos.element === current) return; // Saltar el elemento actual
+            
+            const dx = pos.x - currentPos.x;
+            const dy = pos.y - currentPos.y;
+            
+            let isValid = false;
+            let distance = Infinity;
+            
+            switch(direction) {
+                case 'up':
+                    // Elemento debe estar arriba (y menor) y relativamente alineado horizontalmente
+                    if (dy < -10) { // Al menos 10px arriba para evitar elementos en la misma línea
+                        isValid = true;
+                        // Distancia prioriza vertical, luego horizontal
+                        distance = Math.abs(dy) + Math.abs(dx) * 0.5;
+                    }
+                    break;
+                    
+                case 'down':
+                    // Elemento debe estar abajo (y mayor)
+                    if (dy > 10) {
+                        isValid = true;
+                        distance = Math.abs(dy) + Math.abs(dx) * 0.5;
+                    }
+                    break;
+                    
+                case 'left':
+                    // Elemento debe estar a la izquierda (x menor)
+                    if (dx < -10) {
+                        isValid = true;
+                        distance = Math.abs(dx) + Math.abs(dy) * 0.5;
+                    }
+                    break;
+                    
+                case 'right':
+                    // Elemento debe estar a la derecha (x mayor)
+                    if (dx > 10) {
+                        isValid = true;
+                        distance = Math.abs(dx) + Math.abs(dy) * 0.5;
+                    }
+                    break;
+            }
+            
+            if (isValid && distance < minDistance) {
+                minDistance = distance;
+                closest = pos.element;
+            }
+        });
+        
+        return closest;
+    }
+    
+    // 1. Indicadores de foco visibles
+    function updateFocusableElements() {
+        const focusable = getFocusableElements();
+        focusable.forEach(el => {
+            el.addEventListener('focus', () => {
+                el.classList.add('keyboard-focus');
+            });
+            el.addEventListener('blur', () => {
+                el.classList.remove('keyboard-focus');
+            });
+        });
+    }
+    
+    updateFocusableElements();
+    
+    // 2. Navegación direccional con flechas
     document.addEventListener('keydown', (e) => {
-        // Ignorar si el usuario está escribiendo en un input
+        // Ignorar si el usuario está escribiendo en un input (excepto Escape)
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            if (e.key === 'Escape') {
+                e.target.blur();
+            }
             return;
         }
         
-        // === ATAJOS GLOBALES ===
+        const current = document.activeElement;
+        let target = null;
         
-        // 'C' = Abrir/Cerrar Carrito
-        if (e.key === 'c' || e.key === 'C') {
-            e.preventDefault();
-            const cartModal = document.getElementById('cartModal');
-            const cartIcon = document.querySelector('.cart-icon');
-            if (cartModal && cartIcon) {
-                if (cartModal.style.display === 'flex') {
-                    cartModal.style.display = 'none';
-                } else {
-                    cartModal.style.display = 'flex';
-                    if (typeof cargarCarritoModal === 'function') {
-                        cargarCarritoModal();
-                    }
-                }
-                showNotification('🛒 Carrito ' + (cartModal.style.display === 'flex' ? 'abierto' : 'cerrado'));
+        // === NAVEGACIÓN DIRECCIONAL CON FLECHAS ===
+        
+        switch(e.key) {
+            case 'ArrowUp':
+                e.preventDefault();
+                target = findElementInDirection(current, 'up');
+                break;
+                
+            case 'ArrowDown':
+                e.preventDefault();
+                target = findElementInDirection(current, 'down');
+                break;
+                
+            case 'ArrowLeft':
+                e.preventDefault();
+                target = findElementInDirection(current, 'left');
+                break;
+                
+            case 'ArrowRight':
+                e.preventDefault();
+                target = findElementInDirection(current, 'right');
+                break;
+        }
+        
+        if (target) {
+            target.focus();
+            // Scroll suave si el elemento no está visible
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        }
+        
+        // === ATAJOS ESPECIALES (solo flechas + enter) ===
+        
+        // Enter o Space = Activar elemento enfocado
+        if (e.key === 'Enter' || e.key === ' ') {
+            if (current && current !== document.body) {
+                e.preventDefault();
+                current.click();
             }
         }
         
-        // 'T' = Cambiar Tema (Oscuro/Claro)
-        if (e.key === 't' || e.key === 'T') {
-            e.preventDefault();
-            const toggle = document.getElementById('theme-toggle');
-            if (toggle) {
-                toggle.click();
-            }
-        }
-        
-        // 'Escape' = Cerrar modales
+        // Escape = Cerrar modales y quitar foco
         if (e.key === 'Escape') {
             e.preventDefault();
             
-            // Cerrar modal del carrito
             const cartModal = document.getElementById('cartModal');
             if (cartModal && cartModal.style.display === 'flex') {
                 cartModal.style.display = 'none';
                 showNotification('🛒 Carrito cerrado');
             }
             
-            // Cerrar modal del ticket
             const ticketModal = document.getElementById('ticketModal');
             if (ticketModal) {
                 ticketModal.remove();
                 showNotification('🎫 Ticket cerrado');
             }
             
-            // Cerrar dropdown de usuario
             const dropdown = document.getElementById('dropdown');
             if (dropdown && dropdown.classList.contains('active')) {
                 dropdown.classList.remove('active');
                 const arrow = document.getElementById('arrow');
                 if (arrow) arrow.style.transform = 'rotate(0deg)';
             }
-        }
-        
-        // 'Enter' en elementos focuseados = Activar click
-        if (e.key === 'Enter') {
-            const focused = document.activeElement;
-            if (focused && (focused.tagName === 'BUTTON' || focused.classList.contains('card'))) {
-                focused.click();
+            
+            if (current && current !== document.body) {
+                current.blur();
             }
         }
         
-        // '/' = Enfocar búsqueda (si existe)
-        if (e.key === '/') {
+        // T = Cambiar tema (opcional, mantener por conveniencia)
+        if (e.key === 't' || e.key === 'T') {
             e.preventDefault();
-            const searchInput = document.querySelector('input[type="text"], input[type="search"]');
-            if (searchInput) {
-                searchInput.focus();
-                showNotification('🔍 Búsqueda enfocada (escribe para buscar)');
-            }
-        }
-        
-        // '1-4' = Navegar a secciones del navbar
-        if (e.key >= '1' && e.key <= '4') {
-            e.preventDefault();
-            const navLinks = document.querySelectorAll('.nav-links span');
-            const index = parseInt(e.key) - 1;
-            if (navLinks[index]) {
-                navLinks[index].click();
-                showNotification('📍 Navegando a: ' + navLinks[index].textContent);
-            }
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) toggle.click();
         }
     });
     
-    // 3. Navegación entre tarjetas de productos con flechas
+    // 3. Navegación especial para tarjetas en el carrusel horizontal
     const productRow = document.querySelector('#productos.row');
     if (productRow) {
         productRow.addEventListener('keydown', (e) => {
-            const cards = productRow.querySelectorAll('.card');
-            const currentIndex = Array.from(cards).findIndex(card => card === document.activeElement);
-            
-            if (e.key === 'ArrowRight' && currentIndex < cards.length - 1) {
-                e.preventDefault();
-                cards[currentIndex + 1].focus();
-            }
-            if (e.key === 'ArrowLeft' && currentIndex > 0) {
-                e.preventDefault();
-                cards[currentIndex - 1].focus();
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                const cards = Array.from(productRow.querySelectorAll('.card'));
+                const currentIndex = cards.indexOf(document.activeElement);
+                
+                if (currentIndex !== -1) {
+                    let nextIndex = currentIndex;
+                    if (e.key === 'ArrowRight' && currentIndex < cards.length - 1) {
+                        nextIndex = currentIndex + 1;
+                    } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                        nextIndex = currentIndex - 1;
+                    }
+                    
+                    if (nextIndex !== currentIndex) {
+                        e.preventDefault();
+                        cards[nextIndex].focus();
+                        cards[nextIndex].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }
             }
         });
     }
+    
+    // 4. Actualizar elementos cuando el DOM cambia (modales, carrito, etc.)
+    const observer = new MutationObserver(() => {
+        updateFocusableElements();
+    });
+    
+    observer.observe(document.body, { 
+        childList: true, 
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+    });
+    
+    // 5. Enfocar primer elemento al cargar
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const first = getFocusableElements()[0];
+            if (first) {
+                // No enfocar automáticamente, solo preparar
+                console.log('✅ Navegación direccional lista. Usa las flechas para moverte.');
+            }
+        }, 500);
+    });
+}
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initKeyboardNavigation);
+} else {
+    initKeyboardNavigation();
 }
 
 // Inicializar cuando el DOM esté listo
