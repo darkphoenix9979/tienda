@@ -631,6 +631,146 @@ function initThemeToggle() {
   });
 }
 
+// ==========================
+// ⌨️ NAVEGACIÓN POR TECLADO
+// ==========================
+
+function initKeyboardNavigation() {
+    console.log('⌨️ Navegación por teclado inicializada');
+    
+    // 1. Indicadores de foco visibles para accesibilidad
+    const focusableElements = document.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    focusableElements.forEach(el => {
+        el.addEventListener('focus', () => {
+            el.classList.add('keyboard-focus');
+        });
+        el.addEventListener('blur', () => {
+            el.classList.remove('keyboard-focus');
+        });
+    });
+    
+    // 2. Atajos de teclado globales
+    document.addEventListener('keydown', (e) => {
+        // Ignorar si el usuario está escribiendo en un input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        // === ATAJOS GLOBALES ===
+        
+        // 'C' = Abrir/Cerrar Carrito
+        if (e.key === 'c' || e.key === 'C') {
+            e.preventDefault();
+            const cartModal = document.getElementById('cartModal');
+            const cartIcon = document.querySelector('.cart-icon');
+            if (cartModal && cartIcon) {
+                if (cartModal.style.display === 'flex') {
+                    cartModal.style.display = 'none';
+                } else {
+                    cartModal.style.display = 'flex';
+                    if (typeof cargarCarritoModal === 'function') {
+                        cargarCarritoModal();
+                    }
+                }
+                showNotification('🛒 Carrito ' + (cartModal.style.display === 'flex' ? 'abierto' : 'cerrado'));
+            }
+        }
+        
+        // 'T' = Cambiar Tema (Oscuro/Claro)
+        if (e.key === 't' || e.key === 'T') {
+            e.preventDefault();
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) {
+                toggle.click();
+            }
+        }
+        
+        // 'Escape' = Cerrar modales
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            
+            // Cerrar modal del carrito
+            const cartModal = document.getElementById('cartModal');
+            if (cartModal && cartModal.style.display === 'flex') {
+                cartModal.style.display = 'none';
+                showNotification('🛒 Carrito cerrado');
+            }
+            
+            // Cerrar modal del ticket
+            const ticketModal = document.getElementById('ticketModal');
+            if (ticketModal) {
+                ticketModal.remove();
+                showNotification('🎫 Ticket cerrado');
+            }
+            
+            // Cerrar dropdown de usuario
+            const dropdown = document.getElementById('dropdown');
+            if (dropdown && dropdown.classList.contains('active')) {
+                dropdown.classList.remove('active');
+                const arrow = document.getElementById('arrow');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // 'Enter' en elementos focuseados = Activar click
+        if (e.key === 'Enter') {
+            const focused = document.activeElement;
+            if (focused && (focused.tagName === 'BUTTON' || focused.classList.contains('card'))) {
+                focused.click();
+            }
+        }
+        
+        // '/' = Enfocar búsqueda (si existe)
+        if (e.key === '/') {
+            e.preventDefault();
+            const searchInput = document.querySelector('input[type="text"], input[type="search"]');
+            if (searchInput) {
+                searchInput.focus();
+                showNotification('🔍 Búsqueda enfocada (escribe para buscar)');
+            }
+        }
+        
+        // '1-4' = Navegar a secciones del navbar
+        if (e.key >= '1' && e.key <= '4') {
+            e.preventDefault();
+            const navLinks = document.querySelectorAll('.nav-links span');
+            const index = parseInt(e.key) - 1;
+            if (navLinks[index]) {
+                navLinks[index].click();
+                showNotification('📍 Navegando a: ' + navLinks[index].textContent);
+            }
+        }
+    });
+    
+    // 3. Navegación entre tarjetas de productos con flechas
+    const productRow = document.querySelector('#productos.row');
+    if (productRow) {
+        productRow.addEventListener('keydown', (e) => {
+            const cards = productRow.querySelectorAll('.card');
+            const currentIndex = Array.from(cards).findIndex(card => card === document.activeElement);
+            
+            if (e.key === 'ArrowRight' && currentIndex < cards.length - 1) {
+                e.preventDefault();
+                cards[currentIndex + 1].focus();
+            }
+            if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                e.preventDefault();
+                cards[currentIndex - 1].focus();
+            }
+        });
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initKeyboardNavigation);
+} else {
+    initKeyboardNavigation();
+}
+
 // Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initThemeToggle);

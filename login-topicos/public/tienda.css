@@ -647,3 +647,87 @@ footer {
     background: var(--bg-secondary, #6b7280);
     color: var(--text-primary, white);
 }
+
+/* ==========================
+   ⌨️ INDICADORES DE FOCO PARA TECLADO
+   ========================== */
+
+/* Foco visible para navegación por teclado */
+.keyboard-focus,
+button:focus,
+.card:focus,
+[tabindex]:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 3px solid var(--accent-primary, #ff6a00);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.3);
+    transition: outline 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Remover outline por defecto y usar el personalizado */
+button:focus,
+.card:focus {
+    outline: 3px solid var(--accent-primary, #ff6a00);
+    outline-offset: 2px;
+}
+
+/* Tarjetas de productos navegables */
+.card {
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:focus {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 106, 0, 0.5);
+}
+
+/* Botones con foco */
+button:focus {
+    transform: scale(1.02);
+}
+
+/* Enlaces del navbar */
+.nav-links span {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.nav-links span:focus {
+    background: var(--bg-secondary);
+    outline: 2px solid var(--accent-primary);
+}
+
+/* Items del dropdown */
+.dropdown-item {
+    cursor: pointer;
+}
+
+.dropdown-item:focus {
+    background: var(--dropdown-hover);
+    outline: 2px solid var(--accent-primary);
+}
+
+/* ==========================
+   AYUDA VISUAL DE ATAJOS (OPCIONAL)
+   ========================== */
+
+/* Tooltip de atajos en hover */
+[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 100;
+}
