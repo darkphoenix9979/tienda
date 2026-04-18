@@ -2,7 +2,6 @@
    ⌨️ NAVEGACIÓN POR TECLADO
    ========================== */
 
-/* Estilos de foco solo cuando se usa teclado */
 .keyboard-navigation .keyboard-focus,
 .keyboard-navigation button:focus,
 .keyboard-navigation .card:focus,
@@ -16,30 +15,25 @@
     transition: outline 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Tarjetas */
 .keyboard-navigation .card:focus {
     transform: scale(1.05);
     z-index: 10;
 }
 
-/* Navbar */
 .keyboard-navigation .nav-links span:focus {
     background: var(--bg-secondary);
     border-radius: 4px;
 }
 
-/* Carrito */
 .keyboard-navigation .cart-icon:focus {
     background: var(--bg-secondary);
     border-radius: 4px;
 }
 
-/* Botones flotantes */
 .keyboard-navigation .floating-btn:focus {
     transform: scale(1.15);
 }
 
-/* Sin estilos de foco cuando se usa ratón */
 body:not(.keyboard-navigation) button:focus,
 body:not(.keyboard-navigation) .card:focus,
 body:not(.keyboard-navigation) [tabindex]:focus {
@@ -47,7 +41,6 @@ body:not(.keyboard-navigation) [tabindex]:focus {
     box-shadow: none;
 }
 
-/* Elementos dentro de modales */
 .keyboard-navigation .ticket-btn:focus,
 .keyboard-navigation .ticket-close-btn:focus,
 .keyboard-navigation .cart-content button:focus {

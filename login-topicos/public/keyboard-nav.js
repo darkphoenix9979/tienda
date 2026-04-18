@@ -1,7 +1,6 @@
 /**
  * ⌨️ NAVEGACIÓN POR TECLADO - AnimeStore
- * Archivo independiente para navegación accesible
- * Uso: <script src="keyboard-nav.js"></script>
+ * Versión corregida: Sin necesidad de Tab, foco persistente
  */
 
 (function() {
@@ -24,12 +23,12 @@
     // ESTADO
     // ==========================
     let keyboardNavigationActive = false;
+    let lastFocusedElement = null;
     
     // ==========================
     // UTILIDADES
     // ==========================
     
-    // Obtener elementos enfocables visibles
     function getFocusableElements() {
         const selectors = [
             'button:not([disabled])',
@@ -54,7 +53,6 @@
             });
     }
     
-    // Calcular centro del elemento
     function getElementCenter(el) {
         const rect = el.getBoundingClientRect();
         return {
@@ -65,7 +63,6 @@
         };
     }
     
-    // Encontrar elemento en dirección específica
     function findElementInDirection(current, direction) {
         const elements = getFocusableElements().map(getElementCenter);
         const currentPos = getElementCenter(current);
@@ -125,6 +122,8 @@
     function addFocusStyles() {
         const focusable = getFocusableElements();
         focusable.forEach(el => {
+            el.removeEventListener('focus', handleFocus);
+            el.removeEventListener('blur', handleBlur);
             el.addEventListener('focus', handleFocus);
             el.addEventListener('blur', handleBlur);
         });
@@ -133,6 +132,7 @@
     function handleFocus(e) {
         if (keyboardNavigationActive) {
             e.target.classList.add('keyboard-focus');
+            lastFocusedElement = e.target;
         }
     }
     
@@ -144,22 +144,32 @@
     // EVENTOS DE TECLADO
     // ==========================
     
+    function handleKeydownGlobal(e) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
+            keyboardNavigationActive = true;
+            document.body.classList.add('keyboard-navigation');
+        }
+    }
+    
+    function handleMousedown() {
+        keyboardNavigationActive = false;
+        document.body.classList.remove('keyboard-navigation');
+    }
+    
     function handleKeydown(e) {
         if (!CONFIG.enabled) return;
         
-        // Ignorar si está escribiendo en inputs (excepto Escape)
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
             if (e.key === 'Escape') {
                 e.target.blur();
             }
-            return; // ✅ IMPORTANTE: No prevenir default aquí
+            return;
         }
         
         const current = document.activeElement;
         let target = null;
         let preventDefault = false;
         
-        // Navegación direccional con flechas
         switch(e.key) {
             case 'ArrowUp':
                 target = findElementInDirection(current, 'up');
@@ -182,6 +192,15 @@
                 if (current && current !== document.body && keyboardNavigationActive) {
                     preventDefault = true;
                     current.click();
+                    
+                    // ✅ Mantener foco después de la acción
+                    setTimeout(() => {
+                        if (current && document.contains(current)) {
+                            current.focus();
+                        } else if (lastFocusedElement && document.contains(lastFocusedElement)) {
+                            lastFocusedElement.focus();
+                        }
+                    }, 100);
                 }
                 break;
             case 'Escape':
@@ -203,6 +222,7 @@
                 block: 'nearest', 
                 inline: 'nearest' 
             });
+            keyboardNavigationActive = true;
         }
         
         if (preventDefault) {
@@ -210,9 +230,7 @@
         }
     }
     
-    // Manejar Escape para cerrar modales
     function handleEscape() {
-        // Cerrar carrito
         const cartModal = document.getElementById('cartModal');
         if (cartModal && cartModal.style.display === 'flex') {
             cartModal.style.display = 'none';
@@ -221,7 +239,6 @@
             }
         }
         
-        // Cerrar ticket
         const ticketModal = document.getElementById('ticketModal');
         if (ticketModal) {
             ticketModal.remove();
@@ -230,7 +247,6 @@
             }
         }
         
-        // Cerrar dropdown
         const dropdown = document.getElementById('dropdown');
         if (dropdown && dropdown.classList.contains('active')) {
             dropdown.classList.remove('active');
@@ -238,28 +254,10 @@
             if (arrow) arrow.style.transform = 'rotate(0deg)';
         }
         
-        // Quitar foco
         if (document.activeElement && document.activeElement.blur) {
             document.activeElement.blur();
         }
         
-        keyboardNavigationActive = false;
-    }
-    
-    // ==========================
-    // DETECTAR USO DE TECLADO
-    // ==========================
-    
-    function handleKeydownGlobal(e) {
-        // Activar navegación por teclado cuando se usa una tecla
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
-            keyboardNavigationActive = true;
-            document.body.classList.add('keyboard-navigation');
-        }
-    }
-    
-    function handleMousedown() {
-        // Desactivar estilos de teclado cuando se usa el ratón
         keyboardNavigationActive = false;
         document.body.classList.remove('keyboard-navigation');
     }
@@ -271,15 +269,12 @@
     function init() {
         console.log('✅ Navegación por teclado inicializada');
         
-        // Agregar estilos de foco
         addFocusStyles();
         
-        // Event listeners
         document.addEventListener('keydown', handleKeydownGlobal);
         document.addEventListener('keydown', handleKeydown);
         document.addEventListener('mousedown', handleMousedown);
         
-        // Actualizar cuando el DOM cambia
         const observer = new MutationObserver(() => {
             addFocusStyles();
         });
@@ -292,10 +287,6 @@
         console.log('✅ Navegación lista. Usa flechas + Enter');
     }
     
-    // ==========================
-    // EXPORTAR FUNCIONES (OPCIONAL)
-    // ==========================
-    
     window.KeyboardNav = {
         enable: () => { CONFIG.enabled = true; },
         disable: () => { CONFIG.enabled = false; },
@@ -303,7 +294,6 @@
         isActive: () => keyboardNavigationActive
     };
     
-    // Iniciar cuando el DOM esté listo
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
