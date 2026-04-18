@@ -4,43 +4,34 @@
     <meta charset="UTF-8">
     <title>AnimeStore</title>
     <link rel="stylesheet" href="tienda.css">
-
-    <!-- Fuse.js (para búsqueda si la usas en tienda.js o chatbot.js) -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-
-    <!-- Estilos del chatbot -->
     <link rel="stylesheet" href="chatbot.css">
 </head>
 
 <body>
 
-<!-- Navbar y contenido principal de la tienda -->
+<!-- Navbar -->
 <div class="navbar">
     <div class="logo">AnimeStore</div>
-
     <div class="nav-links">
         <span>Inicio</span>
         <span>Figuras</span>
         <span>Mangas</span>
         <span>Ropa</span>
     </div>
-
     <div class="user-menu" id="userMenu">
         <div class="user-trigger">
             <div class="avatar" id="avatar"></div>
             <span id="usernameDisplay"></span>
             <span class="arrow" id="arrow">▼</span>
         </div>
-
         <div class="dropdown" id="dropdown">
             <div class="dropdown-item" onclick="logout()">Cerrar sesión</div>
         </div>
     </div>
-
     <div class="cart-icon">
         🛒 <span id="cartCount">0</span>
     </div>
-
     <!-- MODAL CARRITO -->
     <div id="cartModal" class="cart-modal">
         <div class="cart-content">
@@ -48,9 +39,7 @@
                 <h2>Mi Carrito</h2>
                 <span id="closeCart">✖</span>
             </div>
-
             <div id="cartItems"></div>
-
             <div class="cart-footer">
                 <h3 id="cartTotal">Total: $0 MXN</h3>
                 <button onclick="simularCompra()">Comprar</button>
@@ -64,13 +53,13 @@
     <div class="hero-overlay"></div>
 </div>
 
-<!-- SECCIÓN DINÁMICA -->
+<!-- SECCIÓN PRODUCTOS -->
 <div class="section">
     <h2>Productos</h2>
     <div class="row" id="productos"></div>
 </div>
 
-<!-- SECCIÓN CARRITO (la segunda, la del body principal) -->
+<!-- SECCIÓN CARRITO -->
 <div class="section">
     <h2>Mi Carrito</h2>
     <div class="row" id="carrito"></div>
@@ -79,23 +68,20 @@
     </div>
 </div>
 
-<footer style="margin-top:60px; padding:30px; background:#111; text-align:center; color:#777;">
+<!-- FOOTER (sin estilos en línea - usa CSS) -->
+<footer class="site-footer">
     © 2026 AnimeStore - Todos los derechos reservados
 </footer>
 
-<!-- Botón de tema (esquina inferior IZQUIERDA) -->
+<!-- Botones flotantes -->
 <div class="floating-left">
-    <button id="theme-toggle" class="floating-btn" aria-label="Cambiar tema">
-        ☀️
-    </button>
+    <button id="theme-toggle" class="floating-btn" aria-label="Cambiar tema">☀️</button>
 </div>
-
-<!-- Botón de chatbot (esquina inferior DERECHA) -->
 <div class="floating-right">
     <div id="chatButton" class="floating-btn">💬</div>
 </div>
 
-<!-- Ventana del chatbot -->
+<!-- Chatbot -->
 <div id="chatContainer">
     <div class="chat-header">
         Asistente
@@ -108,54 +94,58 @@
     </div>
 </div>
 
-<!-- /☀️ Script de Modo Oscuro (DEBE IR AL FINAL) -->
-<script>
-(function() {
-    const toggle = document.getElementById('theme-toggle');
-    const root = document.documentElement;
-    
-    if (!toggle) {
-        console.error('❌ ERROR: No se encontró el botón #theme-toggle');
-        return;
-    }
-
-    // Cargar tema guardado
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        root.setAttribute('data-theme', 'light');
-        toggle.textContent = '🌙';
-        console.log('✅ Tema claro cargado');
-    } else {
-        toggle.textContent = '☀️';
-        console.log('✅ Tema oscuro cargado');
-    }
-
-    // Evento Click
-    toggle.addEventListener('click', function() {
-        const isDark = root.getAttribute('data-theme') !== 'light';
-        
-        if (isDark) {
-            root.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-            toggle.textContent = '🌙';
-            console.log('🌞 Modo Claro Activado');
-        } else {
-            root.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'dark');
-            toggle.textContent = '☀️';
-            console.log('🌙 Modo Oscuro Activado');
-        }
-    });
-    
-    console.log('✅ Sistema de temas inicializado correctamente');
-})();
-</script>
-
-</body>
-
-<!-- Scripts (importante: después de los elementos HTML que usan) -->
+<!-- ==========================
+     SCRIPTS - ORDEN CORRECTO
+     ========================== -->
+<!-- 1. Primero los scripts principales -->
 <script src="tienda.js"></script>
 <script src="chatbot.js"></script>
+
+<!-- 2. AL FINAL: Script del tema (después de que todo cargue) -->
+<script>
+(function() {
+    // Esperar a que TODO el DOM esté listo
+    function initTheme() {
+        const toggle = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+        
+        if (!toggle) {
+            console.error('❌ ERROR: No se encontró #theme-toggle');
+            return;
+        }
+
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            root.setAttribute('data-theme', 'light');
+            toggle.textContent = '🌙';
+        } else {
+            toggle.textContent = '☀️';
+        }
+
+        // Evento Click
+        toggle.addEventListener('click', function() {
+            const isDark = root.getAttribute('data-theme') !== 'light';
+            if (isDark) {
+                root.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                toggle.textContent = '🌙';
+            } else {
+                root.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+                toggle.textContent = '☀️';
+            }
+        });
+    }
+
+    // Ejecutar cuando el DOM esté completamente cargado
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTheme);
+    } else {
+        initTheme();
+    }
+})();
+</script>
 
 </body>
 </html>

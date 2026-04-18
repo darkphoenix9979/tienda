@@ -474,13 +474,14 @@ body {
 /* ==========================
    FOOTER
    ========================== */
-footer {
-  margin-top: 60px;
-  padding: 30px;
-  background: var(--bg-tertiary);
-  text-align: center;
-  color: var(--text-muted);
-  transition: background-color 0.3s ease, color 0.3s ease;
+/* Footer con variables */
+.site-footer {
+    margin-top: 60px;
+    padding: 30px;
+    background: var(--bg-tertiary);
+    text-align: center;
+    color: var(--text-muted);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ==========================
