@@ -89,27 +89,32 @@ ${cart.map(item =>
 
     // Mostrar en modal// Dentro de generateTicket(), reemplaza la creación del modal por esto:
 
+// Mostrar en modal
 const modal = document.createElement('div');
 modal.id = 'ticketModal';
-modal.className = 'ticket-modal'; // 👈 Clase para controlar con CSS
+modal.className = 'ticket-modal';
 modal.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: var(--modal-overlay, rgba(0,0,0,0.7));
     display: flex; justify-content: center;
     align-items: center; z-index: 10000; font-family: monospace;
-    transition: background-color 0.3s ease;
 `;
 
 modal.innerHTML = `
-    <div class="ticket-content" style="padding: 20px; border-radius: 10px; max-width: 400px; text-align: left;">
-        <pre style="white-space: pre-wrap; font-size: 14px; line-height: 1.4; margin: 0; color: var(--text-primary);">${ticket}</pre>
-        <div style="text-align: center; margin-top: 15px; display: flex; gap: 8px; justify-content: center;">
+    <div class="ticket-content-box">
+        <div class="ticket-header">
+            <h3>🛒 Ticket de Compra</h3>
+            <button onclick="cerrarTicket()" class="ticket-close-btn">✖</button>
+        </div>
+        <pre class="ticket-text">${ticket}</pre>
+        <div class="ticket-actions">
             <button onclick="imprimirTicket()" class="ticket-btn ticket-btn-success">🖨️ Imprimir</button>
             <button onclick="descargarTicket()" class="ticket-btn ticket-btn-info">💾 Descargar</button>
-            <button onclick="cerrarTicket()" class="ticket-btn ticket-btn-close">✖ Cerrar</button>
+            <button onclick="cerrarTicket()" class="ticket-btn ticket-btn-close">Cerrar</button>
         </div>
     </div>
 `;
+
 document.body.appendChild(modal);
 
     // Guardar para imprimir/descargar

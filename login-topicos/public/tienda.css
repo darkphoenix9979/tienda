@@ -539,3 +539,107 @@ footer {
     transition: background-color 0.3s ease;
 }
 
+/* ==========================
+   TICKET MODAL - MODO OSCURO/CLARO
+   ========================== */
+
+/* ==========================
+   TICKET MODAL - MODO OSCURO/CLARO
+   ========================== */
+
+.ticket-content-box {
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #000000);
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.1));
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color, rgba(0,0,0,0.1));
+}
+
+.ticket-header h3 {
+    margin: 0;
+    color: var(--text-primary, #000000);
+    font-size: 18px;
+}
+
+.ticket-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-muted, #666);
+    transition: color 0.2s ease, transform 0.2s ease;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ticket-close-btn:hover {
+    color: var(--badge-bg, #ef4444);
+    transform: scale(1.1);
+}
+
+.ticket-text {
+    background: var(--bg-tertiary, #f5f5f5);
+    color: var(--text-primary, #000000);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    margin: 15px 0;
+    border: 1px solid var(--border-color, rgba(0,0,0,0.1));
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.ticket-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.ticket-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    color: white;
+}
+
+.ticket-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.ticket-btn-success {
+    background: var(--toast-success, #22c55e);
+}
+
+.ticket-btn-info {
+    background: var(--accent-secondary, #00aaff);
+}
+
+.ticket-btn-close {
+    background: var(--bg-secondary, #6b7280);
+    color: var(--text-primary, white);
+}
