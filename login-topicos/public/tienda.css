@@ -1,56 +1,111 @@
-
 /* ==========================
-   🌙/☀️ VARIABLES CSS - MODO OSCURO/CLARO
+   🌙/☀️ VARIABLES CSS (DEBE SER LO PRIMERO)
    ========================== */
 :root {
-  /* 🌙 Dark mode (tu diseño actual) */
+  /* Modo Oscuro (Default) */
   --bg-primary: #141414;
   --bg-secondary: #1f1f1f;
   --bg-tertiary: #111111;
-  --bg-card: #111111;
-  --bg-card-hover: #1a1a1a;
   --text-primary: #ffffff;
   --text-secondary: rgba(255,255,255,0.9);
   --text-muted: rgba(255,255,255,0.7);
   --accent-primary: #ff6a00;
   --accent-secondary: #00aaff;
-  --btn-primary-bg: linear-gradient(45deg,#00aaff,#0055ff);
-  --btn-primary-bg-hover: linear-gradient(45deg,#0088ff,#003cff);
   --border-color: rgba(255,255,255,0.1);
   --navbar-bg: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
   --dropdown-bg: #1f1f1f;
   --dropdown-hover: #2a2a2a;
   --modal-overlay: rgba(0,0,0,0.7);
   --badge-bg: #ef4444;
-  --toast-success: #22c55e;
-  --toast-error: #ef4444;
-  --shadow-card: 0 4px 12px rgba(0,0,0,0.3);
   --transition-speed: 0.3s;
 }
 
 [data-theme="light"] {
-  /* ☀️ Light mode (nuevo) */
+  /* Modo Claro */
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;
   --bg-tertiary: #f1f3f5;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8f9fa;
   --text-primary: #111111;
   --text-secondary: rgba(17,17,17,0.9);
   --text-muted: rgba(17,17,17,0.6);
   --accent-primary: #ff6a00;
   --accent-secondary: #0077cc;
-  --btn-primary-bg: linear-gradient(45deg,#00aaff,#0055ff);
-  --btn-primary-bg-hover: linear-gradient(45deg,#0088ff,#003cff);
   --border-color: rgba(0,0,0,0.1);
   --navbar-bg: linear-gradient(to bottom, rgba(255,255,255,0.95), transparent);
   --dropdown-bg: #f8f9fa;
   --dropdown-hover: #e9ecef;
   --modal-overlay: rgba(0,0,0,0.5);
   --badge-bg: #dc2626;
-  --toast-success: #16a34a;
-  --toast-error: #dc2626;
-  --shadow-card: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ==========================
+   APLICACIÓN DE VARIABLES (SIN COLORES FIJOS)
+   ========================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Navbar */
+.navbar {
+  background: var(--navbar-bg);
+}
+
+/* Dropdown */
+.dropdown {
+  background: var(--dropdown-bg);
+  border: 1px solid var(--border-color);
+}
+.dropdown-item:hover {
+  background: var(--dropdown-hover);
+}
+
+/* Footer */
+footer {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+/* Cards */
+.card {
+  background: var(--bg-tertiary);
+}
+.card-info {
+  color: var(--text-primary);
+}
+
+/* Carrito */
+#carrito .card {
+  background: var(--bg-tertiary);
+}
+.cart-content {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+.cart-item img {
+  background: var(--bg-secondary);
+}
+
+/* Modales */
+.cart-modal {
+  background: var(--modal-overlay);
+}
+
+/* Botones flotantes */
+.floating-btn {
+  background: var(--accent-primary);
+  color: white;
+}
+.floating-btn:hover {
+  background: var(--accent-secondary);
 }
 
 *{
