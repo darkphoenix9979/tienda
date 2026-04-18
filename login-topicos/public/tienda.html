@@ -108,6 +108,51 @@
     </div>
 </div>
 
+<!-- /☀️ Script de Modo Oscuro (DEBE IR AL FINAL) -->
+<script>
+(function() {
+    const toggle = document.getElementById('theme-toggle');
+    const root = document.documentElement;
+    
+    if (!toggle) {
+        console.error('❌ ERROR: No se encontró el botón #theme-toggle');
+        return;
+    }
+
+    // Cargar tema guardado
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        toggle.textContent = '🌙';
+        console.log('✅ Tema claro cargado');
+    } else {
+        toggle.textContent = '☀️';
+        console.log('✅ Tema oscuro cargado');
+    }
+
+    // Evento Click
+    toggle.addEventListener('click', function() {
+        const isDark = root.getAttribute('data-theme') !== 'light';
+        
+        if (isDark) {
+            root.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            toggle.textContent = '🌙';
+            console.log('🌞 Modo Claro Activado');
+        } else {
+            root.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+            toggle.textContent = '☀️';
+            console.log('🌙 Modo Oscuro Activado');
+        }
+    });
+    
+    console.log('✅ Sistema de temas inicializado correctamente');
+})();
+</script>
+
+</body>
+
 <!-- Scripts (importante: después de los elementos HTML que usan) -->
 <script src="tienda.js"></script>
 <script src="chatbot.js"></script>

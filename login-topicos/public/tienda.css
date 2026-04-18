@@ -61,8 +61,9 @@
 }
 
 body{
-    background:#141414;
-    color:white;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* NAVBAR */
