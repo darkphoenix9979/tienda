@@ -584,6 +584,53 @@ cargarCarritoModal();
 
 }
 
+// ==========================
+// 🌙/☀️ TOGGLE MODO OSCURO/CLARO
+// ==========================
+function initThemeToggle() {
+  const toggle = document.getElementById('theme-toggle');
+  const root = document.documentElement;
+  
+  // Verificar preferencia guardada
+  const savedTheme = localStorage.getItem('theme');
+  
+  // Por defecto: dark (tu diseño actual)
+  if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    if (toggle) toggle.textContent = '🌙';
+  }
+  
+  // Evento del toggle
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const isDark = root.getAttribute('data-theme') !== 'light';
+      
+      if (isDark) {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        toggle.textContent = '🌙';
+        if (typeof showNotification === 'function') {
+          showNotification('☀️ Modo claro activado');
+        }
+      } else {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        toggle.textContent = '☀️';
+        if (typeof showNotification === 'function') {
+          showNotification('🌙 Modo nocturno activado');
+        }
+      }
+    });
+  }
+}
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initThemeToggle);
+} else {
+  initThemeToggle();
+}
+
 
 // ==========================
 // INICIAR
