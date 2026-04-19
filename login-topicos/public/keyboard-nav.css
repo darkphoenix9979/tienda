@@ -2,48 +2,53 @@
    ⌨️ NAVEGACIÓN POR TECLADO
    ========================== */
 
-.keyboard-navigation .keyboard-focus,
-.keyboard-navigation button:focus,
-.keyboard-navigation .card:focus,
-.keyboard-navigation [tabindex]:focus,
-.keyboard-navigation .nav-links span:focus,
-.keyboard-navigation .cart-icon:focus,
-.keyboard-navigation .floating-btn:focus {
-    outline: 3px solid var(--accent-primary, #ff6a00);
-    outline-offset: 2px;
+/* Solo mostrar foco cuando se usa teclado */
+.keyboard-nav button:focus,
+.keyboard-nav .card:focus,
+.keyboard-nav [tabindex="0"]:focus,
+.keyboard-nav .nav-links span:focus,
+.keyboard-nav .cart-icon:focus {
+    outline: 3px solid #ff6a00 !important;
+    outline-offset: 2px !important;
     box-shadow: 0 0 15px rgba(255, 106, 0, 0.5);
-    transition: outline 0.2s ease, box-shadow 0.2s ease;
 }
 
-.keyboard-navigation .card:focus {
+/* Sin foco cuando se usa ratón */
+body:not(.keyboard-nav) button:focus,
+body:not(.keyboard-nav) .card:focus,
+body:not(.keyboard-nav) [tabindex="0"]:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Tarjetas navegables */
+.card {
+    cursor: pointer;
+}
+
+.card:focus {
     transform: scale(1.05);
     z-index: 10;
 }
 
-.keyboard-navigation .nav-links span:focus {
-    background: var(--bg-secondary);
+/* Navbar */
+.nav-links span {
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.nav-links span:focus {
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
 
-.keyboard-navigation .cart-icon:focus {
-    background: var(--bg-secondary);
+/* Carrito */
+.cart-icon {
+    cursor: pointer;
+    padding: 5px;
     border-radius: 4px;
 }
 
-.keyboard-navigation .floating-btn:focus {
-    transform: scale(1.15);
-}
-
-body:not(.keyboard-navigation) button:focus,
-body:not(.keyboard-navigation) .card:focus,
-body:not(.keyboard-navigation) [tabindex]:focus {
-    outline: none;
-    box-shadow: none;
-}
-
-.keyboard-navigation .ticket-btn:focus,
-.keyboard-navigation .ticket-close-btn:focus,
-.keyboard-navigation .cart-content button:focus {
-    outline: 3px solid var(--accent-primary);
-    outline-offset: 2px;
+.cart-icon:focus {
+    background: rgba(255, 255, 255, 0.1);
 }

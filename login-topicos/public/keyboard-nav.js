@@ -1,303 +1,105 @@
 /**
- * ⌨️ NAVEGACIÓN POR TECLADO - AnimeStore
- * Versión corregida: Sin necesidad de Tab, foco persistente
+ * ⌨️ NAVEGACIÓN POR TECLADO - VERSIÓN SIMPLE
  */
 
-(function() {
-    'use strict';
+console.log('⌨️ Cargando navegación por teclado...');
+
+// Esperar a que todo cargue
+window.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM cargado, inicializando...');
     
-    console.log('⌨️ Módulo de navegación por teclado cargado');
+    let keyboardActive = false;
     
-    // ==========================
-    // CONFIGURACIÓN
-    // ==========================
-    const CONFIG = {
-        focusColor: '#ff6a00',
-        focusWidth: '3px',
-        focusOffset: '2px',
-        scrollBehavior: 'smooth',
-        enabled: true
-    };
+    // Agregar tabindex a elementos importantes
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.setAttribute('tabindex', '0');
+    });
     
-    // ==========================
-    // ESTADO
-    // ==========================
-    let keyboardNavigationActive = false;
-    let lastFocusedElement = null;
+    const navLinks = document.querySelectorAll('.nav-links span');
+    navLinks.forEach(link => {
+        link.setAttribute('tabindex', '0');
+    });
     
-    // ==========================
-    // UTILIDADES
-    // ==========================
-    
-    function getFocusableElements() {
-        const selectors = [
-            'button:not([disabled])',
-            'a[href]',
-            'input:not([disabled])',
-            'select:not([disabled])',
-            'textarea:not([disabled])',
-            '[tabindex]:not([tabindex="-1"])',
-            '.card',
-            '.nav-links span',
-            '.cart-icon',
-            '.dropdown-item',
-            '.floating-btn'
-        ];
-        
-        return Array.from(document.querySelectorAll(selectors.join(', ')))
-            .filter(el => {
-                const style = getComputedStyle(el);
-                return el.offsetParent !== null && 
-                       style.visibility !== 'hidden' &&
-                       style.display !== 'none';
-            });
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.setAttribute('tabindex', '0');
     }
     
-    function getElementCenter(el) {
-        const rect = el.getBoundingClientRect();
-        return {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-            element: el,
-            rect: rect
-        };
-    }
-    
-    function findElementInDirection(current, direction) {
-        const elements = getFocusableElements().map(getElementCenter);
-        const currentPos = getElementCenter(current);
-        
-        let closest = null;
-        let minDistance = Infinity;
-        
-        elements.forEach(pos => {
-            if (pos.element === current) return;
-            
-            const dx = pos.x - currentPos.x;
-            const dy = pos.y - currentPos.y;
-            
-            let isValid = false;
-            let distance = Infinity;
-            
-            switch(direction) {
-                case 'up':
-                    if (dy < -10) {
-                        isValid = true;
-                        distance = Math.abs(dy) + Math.abs(dx) * 0.5;
-                    }
-                    break;
-                case 'down':
-                    if (dy > 10) {
-                        isValid = true;
-                        distance = Math.abs(dy) + Math.abs(dx) * 0.5;
-                    }
-                    break;
-                case 'left':
-                    if (dx < -10) {
-                        isValid = true;
-                        distance = Math.abs(dx) + Math.abs(dy) * 0.5;
-                    }
-                    break;
-                case 'right':
-                    if (dx > 10) {
-                        isValid = true;
-                        distance = Math.abs(dx) + Math.abs(dy) * 0.5;
-                    }
-                    break;
-            }
-            
-            if (isValid && distance < minDistance) {
-                minDistance = distance;
-                closest = pos.element;
-            }
-        });
-        
-        return closest;
-    }
-    
-    // ==========================
-    // MANEJO DE FOCO
-    // ==========================
-    
-    function addFocusStyles() {
-        const focusable = getFocusableElements();
-        focusable.forEach(el => {
-            el.removeEventListener('focus', handleFocus);
-            el.removeEventListener('blur', handleBlur);
-            el.addEventListener('focus', handleFocus);
-            el.addEventListener('blur', handleBlur);
-        });
-    }
-    
-    function handleFocus(e) {
-        if (keyboardNavigationActive) {
-            e.target.classList.add('keyboard-focus');
-            lastFocusedElement = e.target;
+    // Detectar cuando se usa el teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab' || e.key.startsWith('Arrow')) {
+            keyboardActive = true;
+            document.body.classList.add('keyboard-nav');
         }
-    }
+    });
     
-    function handleBlur(e) {
-        e.target.classList.remove('keyboard-focus');
-    }
+    // Detectar cuando se usa el ratón
+    document.addEventListener('mousedown', function() {
+        keyboardActive = false;
+        document.body.classList.remove('keyboard-nav');
+    });
     
-    // ==========================
-    // EVENTOS DE TECLADO
-    // ==========================
-    
-    function handleKeydownGlobal(e) {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
-            keyboardNavigationActive = true;
-            document.body.classList.add('keyboard-navigation');
-        }
-    }
-    
-    function handleMousedown() {
-        keyboardNavigationActive = false;
-        document.body.classList.remove('keyboard-navigation');
-    }
-    
-    function handleKeydown(e) {
-        if (!CONFIG.enabled) return;
-        
+    // Navegación con flechas
+    document.addEventListener('keydown', function(e) {
+        // Ignorar si está en un input
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-            if (e.key === 'Escape') {
-                e.target.blur();
-            }
             return;
         }
         
-        const current = document.activeElement;
-        let target = null;
-        let preventDefault = false;
+        const focusable = Array.from(document.querySelectorAll(
+            'button, [tabindex="0"], a[href]'
+        )).filter(el => {
+            return el.offsetParent !== null && 
+                   getComputedStyle(el).visibility !== 'hidden';
+        });
         
-        switch(e.key) {
-            case 'ArrowUp':
-                target = findElementInDirection(current, 'up');
-                preventDefault = true;
-                break;
-            case 'ArrowDown':
-                target = findElementInDirection(current, 'down');
-                preventDefault = true;
-                break;
-            case 'ArrowLeft':
-                target = findElementInDirection(current, 'left');
-                preventDefault = true;
-                break;
-            case 'ArrowRight':
-                target = findElementInDirection(current, 'right');
-                preventDefault = true;
-                break;
-            case 'Enter':
-            case ' ':
-                if (current && current !== document.body && keyboardNavigationActive) {
-                    preventDefault = true;
-                    current.click();
-                    
-                    // ✅ Mantener foco después de la acción
-                    setTimeout(() => {
-                        if (current && document.contains(current)) {
-                            current.focus();
-                        } else if (lastFocusedElement && document.contains(lastFocusedElement)) {
-                            lastFocusedElement.focus();
-                        }
-                    }, 100);
-                }
-                break;
-            case 'Escape':
-                preventDefault = true;
-                handleEscape();
-                break;
-            case 't':
-            case 'T':
-                preventDefault = true;
-                const toggle = document.getElementById('theme-toggle');
-                if (toggle) toggle.click();
-                break;
-        }
+        const currentIndex = focusable.indexOf(document.activeElement);
         
-        if (target) {
-            target.focus();
-            target.scrollIntoView({ 
-                behavior: CONFIG.scrollBehavior, 
-                block: 'nearest', 
-                inline: 'nearest' 
-            });
-            keyboardNavigationActive = true;
-        }
-        
-        if (preventDefault) {
+        // Flechas
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
             e.preventDefault();
+            const nextIndex = (currentIndex + 1) % focusable.length;
+            focusable[nextIndex].focus();
         }
-    }
-    
-    function handleEscape() {
-        const cartModal = document.getElementById('cartModal');
-        if (cartModal && cartModal.style.display === 'flex') {
-            cartModal.style.display = 'none';
-            if (typeof showNotification === 'function') {
-                showNotification('🛒 Carrito cerrado');
+        
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevIndex = (currentIndex - 1 + focusable.length) % focusable.length;
+            focusable[prevIndex].focus();
+        }
+        
+        // Enter o Space
+        if (e.key === 'Enter' || e.key === ' ') {
+            if (document.activeElement && document.activeElement !== document.body) {
+                e.preventDefault();
+                document.activeElement.click();
+                
+                // Mantener foco
+                setTimeout(() => {
+                    if (document.activeElement && document.contains(document.activeElement)) {
+                        document.activeElement.focus();
+                    }
+                }, 100);
             }
         }
         
-        const ticketModal = document.getElementById('ticketModal');
-        if (ticketModal) {
-            ticketModal.remove();
-            if (typeof showNotification === 'function') {
-                showNotification('🎫 Ticket cerrado');
+        // Escape
+        if (e.key === 'Escape') {
+            const cartModal = document.getElementById('cartModal');
+            if (cartModal) {
+                cartModal.style.display = 'none';
+            }
+            const ticketModal = document.getElementById('ticketModal');
+            if (ticketModal) {
+                ticketModal.remove();
+            }
+            if (document.activeElement) {
+                document.activeElement.blur();
             }
         }
-        
-        const dropdown = document.getElementById('dropdown');
-        if (dropdown && dropdown.classList.contains('active')) {
-            dropdown.classList.remove('active');
-            const arrow = document.getElementById('arrow');
-            if (arrow) arrow.style.transform = 'rotate(0deg)';
-        }
-        
-        if (document.activeElement && document.activeElement.blur) {
-            document.activeElement.blur();
-        }
-        
-        keyboardNavigationActive = false;
-        document.body.classList.remove('keyboard-navigation');
-    }
+    });
     
-    // ==========================
-    // INICIALIZACIÓN
-    // ==========================
-    
-    function init() {
-        console.log('✅ Navegación por teclado inicializada');
-        
-        addFocusStyles();
-        
-        document.addEventListener('keydown', handleKeydownGlobal);
-        document.addEventListener('keydown', handleKeydown);
-        document.addEventListener('mousedown', handleMousedown);
-        
-        const observer = new MutationObserver(() => {
-            addFocusStyles();
-        });
-        
-        observer.observe(document.body, { 
-            childList: true, 
-            subtree: true 
-        });
-        
-        console.log('✅ Navegación lista. Usa flechas + Enter');
-    }
-    
-    window.KeyboardNav = {
-        enable: () => { CONFIG.enabled = true; },
-        disable: () => { CONFIG.enabled = false; },
-        toggle: () => { CONFIG.enabled = !CONFIG.enabled; },
-        isActive: () => keyboardNavigationActive
-    };
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-    
-})();
+    console.log('✅ Navegación por teclado lista');
+    console.log('📋 Elementos enfocables:', document.querySelectorAll('[tabindex="0"]').length);
+});
