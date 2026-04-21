@@ -113,49 +113,111 @@
 <script src="tienda.js"></script>
 <script src="chatbot.js"></script>
 <script src="keyboard-nav.js"></script>
-<script src="guided-reading.js"></script>
 
+<!-- Lectura guiada con Web Speech API nativa -->
 <script>
-// Esperar a que el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     const btn = document.getElementById('guidedReadingBtn');
     const panel = document.getElementById('guidedReadingPanel');
-    
-    // Si no existen los elementos, salir
-    if (!btn || !panel) {
-        console.warn('⚠️ No se encontró guidedReadingBtn o guidedReadingPanel');
-        return;
-    }
-    
-    // Click para mostrar/ocultar panel
-    btn.addEventListener('click', function() {
-        panel.classList.toggle('visible');
-        btn.classList.toggle('active');
-        console.log('📖 Panel visible:', panel.classList.contains('visible'));
-    });
-    
-    // === CONTROLES DEL PANEL (si existen) ===
     const grStart = document.getElementById('grStart');
     const grStop = document.getElementById('grStop');
     const grPrev = document.getElementById('grPrev');
     const grNext = document.getElementById('grNext');
-    
-    if (grStart) grStart.addEventListener('click', function() {
-        console.log('▶️ Iniciar lectura guiada');
-        // Aquí iría la lógica de guided-reading.js
+    const grProgress = document.getElementById('grProgress');
+
+    if (!btn || !panel) return;
+
+    // Mostrar/ocultar panel
+    btn.addEventListener('click', function() {
+        panel.classList.toggle('visible');
+        btn.classList.toggle('active');
     });
-    
-    if (grStop) grStop.addEventListener('click', function() {
-        console.log('⏹️ Detener lectura guiada');
+
+    // Lógica de lectura guiada
+    let chunks = [];
+    let currentIndex = 0;
+    let isPlaying = false;
+    let utterance = null;
+
+    // Verificar soporte del navegador
+    if (!('speechSynthesis' in window)) {
+        console.warn('⚠️ Tu navegador no soporta lectura por voz.');
+        grStart.disabled = true;
+    }
+
+    function loadText() {
+        const elements = document.querySelectorAll('h1, h2, h3, p, li, span:not(.arrow):not(#cartCount):not(#grProgress)');
+        let fullText = '';
+        elements.forEach(el => {
+            // Solo tomar texto visible y no vacío
+            if (el.offsetParent !== null && el.innerText.trim() !== '') {
+                fullText += el.innerText + '. ';
+            }
+        });
+        // Dividir por oraciones
+        chunks = fullText.match(/[^.!?]+[.!?]+/g) || [fullText.trim()];
+        chunks = chunks.map(c => c.trim()).filter(c => c.length > 3);
+        updateProgress();
+    }
+
+    function updateProgress() {
+        if (grProgress) grProgress.textContent = `${currentIndex + 1} / ${chunks.length}`;
+    }
+
+    function speak(index) {
+        if (index < 0 || index >= chunks.length) {
+            isPlaying = false;
+            return;
+        }
+        window.speechSynthesis.cancel();
+        currentIndex = index;
+        updateProgress();
+
+        utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
+        utterance.lang = 'es-MX'; // Voz en español
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+
+        utterance.onend = function() {
+            if (isPlaying) speak(currentIndex + 1);
+        };
+
+        utterance.onerror = function() {
+            isPlaying = false;
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    grStart.addEventListener('click', function() {
+        if (chunks.length === 0) loadText();
+        if (!isPlaying) {
+            isPlaying = true;
+            speak(currentIndex);
+        }
     });
-    
-    if (grPrev) grPrev.addEventListener('click', function() {
-        console.log('◀️ Elemento anterior');
+
+    grStop.addEventListener('click', function() {
+        isPlaying = false;
+        window.speechSynthesis.cancel();
     });
-    
-    if (grNext) grNext.addEventListener('click', function() {
-        console.log('▶️ Siguiente elemento');
+
+    grPrev.addEventListener('click', function() {
+        window.speechSynthesis.cancel();
+        currentIndex = currentIndex > 0 ? currentIndex - 1 : chunks.length - 1;
+        isPlaying = true;
+        speak(currentIndex);
     });
+
+    grNext.addEventListener('click', function() {
+        window.speechSynthesis.cancel();
+        currentIndex = currentIndex < chunks.length - 1 ? currentIndex + 1 : 0;
+        isPlaying = true;
+        speak(currentIndex);
+    });
+
+    // Cargar texto inicial
+    loadText();
 });
 </script>
 
