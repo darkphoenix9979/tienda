@@ -6,8 +6,7 @@
     <link rel="stylesheet" href="tienda.css">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
     <link rel="stylesheet" href="chatbot.css">
-    <!-- Navegación por teclado -->
-    <link rel="stylesheet" href="keyboard-nav.css"> <!-- Opcional, si separas el CSS -->
+    <link rel="stylesheet" href="keyboard-nav.css">
 </head>
 
 <body>
@@ -70,15 +69,17 @@
     </div>
 </div>
 
-<!-- FOOTER (sin estilos en línea - usa CSS) -->
+<!-- FOOTER -->
 <footer class="site-footer">
     © 2026 AnimeStore - Todos los derechos reservados
 </footer>
 
-<!-- Botones flotantes -->
+<!-- Botones flotantes (UNA SOLA VEZ) -->
 <div class="floating-left">
     <button id="theme-toggle" class="floating-btn" aria-label="Cambiar tema">☀️</button>
+    <button id="guidedReadingBtn" class="guided-reading-btn" aria-label="Lectura guiada" title="Lectura guiada (G)">📖</button>
 </div>
+
 <div class="floating-right">
     <div id="chatButton" class="floating-btn">💬</div>
 </div>
@@ -96,32 +97,43 @@
     </div>
 </div>
 
-<!-- Navbar -->
-<div class="nav-links">
-    <span tabindex="0">Inicio</span>
-    <span tabindex="0">Figuras</span>
-    <span tabindex="0">Mangas</span>
-    <span tabindex="0">Ropa</span>
+<!-- Panel de control de lectura guiada -->
+<div id="guidedReadingPanel" class="guided-reading-panel">
+    <h4>📖 Lectura Guiada</h4>
+    <div class="guided-reading-controls">
+        <button id="grStart">Iniciar</button>
+        <button id="grStop">Detener</button>
+        <button id="grPrev">◀ Ant</button>
+        <button id="grNext">Sig ▶</button>
+    </div>
+    <div class="guided-reading-progress" id="grProgress">0 / 0</div>
 </div>
 
-<!-- Carrito -->
-<div class="cart-icon" tabindex="0">
-    🛒 <span id="cartCount">0</span>
-</div>
-
-<!-- Botones flotantes -->
-<button id="theme-toggle" class="floating-btn" tabindex="0">☀️</button>
-<div id="chatButton" class="floating-btn" tabindex="0">💬</div>
-
-<!-- ==========================
-     SCRIPTS - ORDEN CORRECTO
-     ========================== -->
-<!-- 1. Primero los scripts principales -->
+<!-- Scripts en orden correcto -->
 <script src="tienda.js"></script>
 <script src="chatbot.js"></script>
-<!-- Navegación por teclado (AL FINAL, después de todo) -->
 <script src="keyboard-nav.js"></script>
+<script src="guided-reading.js"></script>
 
+<!-- Inicializar botón de lectura guiada (CORREGIDO) -->
+<script>
+(function() {
+    const btn = document.getElementById('guidedReadingBtn');
+    const panel = document.getElementById('guidedReadingPanel');
+    const grStart = document.getElementById('grStart');
+    const grStop = document.getElementById('grStop');
+    const grPrev = document.getElementById('grPrev');
+    const grNext = document.getElementById('grNext');
+    const grProgress = document.getElementById('grProgress');
+    
+    if (!btn || !window.GuidedReading) return;
+    
+    btn.addEventListener('click', function() {
+        panel.classList.toggle('visible');
+        btn.classList.toggle('active');
+    });
+})();
+</script>
 
 </body>
 </html>

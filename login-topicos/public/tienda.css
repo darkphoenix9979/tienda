@@ -648,3 +648,119 @@ footer {
     color: var(--text-primary, white);
 }
 
+/* ==========================
+   📖 LECTURA GUIADA
+   ========================== */
+
+/* Indicador visual cuando la lectura guiada está activa */
+body.guided-reading-active {
+    cursor: crosshair;
+}
+
+/* Elementos en modo lectura guiada */
+body.guided-reading-active .card {
+    transition: all 0.3s ease;
+}
+
+body.guided-reading-active .card:hover {
+    transform: none; /* Desactivar hover durante lectura */
+}
+
+/* Botón de lectura guiada (flotante) */
+.guided-reading-btn {
+    position: fixed;
+    bottom: 100px;
+    left: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent-secondary, #00aaff);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, background-color 0.3s ease;
+    z-index: 9998;
+}
+
+.guided-reading-btn:hover {
+    transform: scale(1.1);
+    background: var(--accent-primary, #ff6a00);
+}
+
+.guided-reading-btn.active {
+    background: var(--badge-bg, #ef4444);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    50% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+}
+
+/* Panel de control de lectura guiada */
+.guided-reading-panel {
+    position: fixed;
+    bottom: 160px;
+    left: 30px;
+    background: var(--bg-card, #1f1f1f);
+    border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 9998;
+    display: none;
+    min-width: 200px;
+}
+
+.guided-reading-panel.visible {
+    display: block;
+}
+
+.guided-reading-panel h4 {
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.guided-reading-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.guided-reading-controls button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    background: var(--accent-primary);
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s ease;
+}
+
+.guided-reading-controls button:hover {
+    background: var(--accent-secondary);
+}
+
+.guided-reading-progress {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Modo lectura: oscurecer elementos no enfocados */
+body.guided-reading-active > *:not(.guided-reading-highlight) {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+body.guided-reading-active .guided-reading-highlight {
+    opacity: 1;
+}
+
