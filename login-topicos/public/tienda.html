@@ -115,24 +115,48 @@
 <script src="keyboard-nav.js"></script>
 <script src="guided-reading.js"></script>
 
-<!-- Inicializar botón de lectura guiada (CORREGIDO) -->
 <script>
-(function() {
+// Esperar a que el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
     const btn = document.getElementById('guidedReadingBtn');
     const panel = document.getElementById('guidedReadingPanel');
+    
+    // Si no existen los elementos, salir
+    if (!btn || !panel) {
+        console.warn('⚠️ No se encontró guidedReadingBtn o guidedReadingPanel');
+        return;
+    }
+    
+    // Click para mostrar/ocultar panel
+    btn.addEventListener('click', function() {
+        panel.classList.toggle('visible');
+        btn.classList.toggle('active');
+        console.log('📖 Panel visible:', panel.classList.contains('visible'));
+    });
+    
+    // === CONTROLES DEL PANEL (si existen) ===
     const grStart = document.getElementById('grStart');
     const grStop = document.getElementById('grStop');
     const grPrev = document.getElementById('grPrev');
     const grNext = document.getElementById('grNext');
-    const grProgress = document.getElementById('grProgress');
     
-    if (!btn || !window.GuidedReading) return;
-    
-    btn.addEventListener('click', function() {
-        panel.classList.toggle('visible');
-        btn.classList.toggle('active');
+    if (grStart) grStart.addEventListener('click', function() {
+        console.log('▶️ Iniciar lectura guiada');
+        // Aquí iría la lógica de guided-reading.js
     });
-})();
+    
+    if (grStop) grStop.addEventListener('click', function() {
+        console.log('⏹️ Detener lectura guiada');
+    });
+    
+    if (grPrev) grPrev.addEventListener('click', function() {
+        console.log('◀️ Elemento anterior');
+    });
+    
+    if (grNext) grNext.addEventListener('click', function() {
+        console.log('▶️ Siguiente elemento');
+    });
+});
 </script>
 
 </body>
