@@ -766,5 +766,5 @@ body.guided-reading-active .guided-reading-highlight {
 
 html {
     scroll-behavior: smooth;
-    scroll-padding-top: 80px; /* Ajusta según la altura de tu navbar */
+    scroll-padding-top: 100px; /* Ajusta según la altura de tu navbar */
 }
