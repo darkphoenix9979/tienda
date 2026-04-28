@@ -18,43 +18,17 @@ function showNotification(message, type = "success") {
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
+    // ✅ Usar clases CSS definidas en tu hoja de estilos
     toast.className = `toast-notification ${type}`;
-    
-    // ✅ Usa variables CSS en lugar de colores fijos
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? 'var(--toast-success, #22c55e)' : 'var(--toast-error, #ef4444)'};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px var(--shadow-card, rgba(0,0,0,0.15));
-        z-index: 9999;
-        font-weight: 500;
-        animation: slideIn 0.3s ease;
-        transition: background-color 0.3s ease;
-    `;
+    toast.setAttribute('role', 'alert'); // ✅ Accesibilidad
+    toast.setAttribute('aria-live', 'polite');
     toast.textContent = message;
+    
     document.body.appendChild(toast);
 
-    if (!document.querySelector('#toast-styles')) {
-        const style = document.createElement('style');
-        style.id = 'toast-styles';
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(150px); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes fadeOut {
-                to { opacity: 0; transform: translateY(-10px); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
+    // ✅ Animación vía CSS (ya definida en tu CSS o agregarla)
     setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.3s ease forwards';
+        toast.classList.add('fade-out');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
@@ -90,35 +64,39 @@ ${cart.map(item =>
     // Mostrar en modal// Dentro de generateTicket(), reemplaza la creación del modal por esto:
 
 // Mostrar en modal
-const modal = document.createElement('div');
-modal.id = 'ticketModal';
-modal.className = 'ticket-modal';
-modal.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: var(--modal-overlay, rgba(0,0,0,0.7));
-    display: flex; justify-content: center;
-    align-items: center; z-index: 10000; font-family: monospace;
-`;
+    const modal = document.createElement('div');
+    modal.id = 'ticketModal';
+    modal.className = 'ticket-modal'; // ✅ Clase CSS en vez de inline
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'ticketTitle');
 
-modal.innerHTML = `
-    <div class="ticket-content-box">
-        <div class="ticket-header">
-            <h3>🛒 Ticket de Compra</h3>
-            <button onclick="cerrarTicket()" class="ticket-close-btn">✖</button>
+    modal.innerHTML = `
+        <div class="ticket-content-box">
+            <div class="ticket-header">
+                <h3 id="ticketTitle">🛒 Ticket de Compra</h3>
+                <button onclick="cerrarTicket()" class="ticket-close-btn" aria-label="Cerrar ticket">✖</button>
+            </div>
+            <pre class="ticket-text">${ticket}</pre>
+            <div class="ticket-actions">
+                <button onclick="imprimirTicket()" class="ticket-btn ticket-btn-success">🖨️ Imprimir</button>
+                <button onclick="descargarTicket()" class="ticket-btn ticket-btn-info">💾 Descargar</button>
+                <button onclick="cerrarTicket()" class="ticket-btn ticket-btn-close">Cerrar</button>
+            </div>
         </div>
-        <pre class="ticket-text">${ticket}</pre>
-        <div class="ticket-actions">
-            <button onclick="imprimirTicket()" class="ticket-btn ticket-btn-success">🖨️ Imprimir</button>
-            <button onclick="descargarTicket()" class="ticket-btn ticket-btn-info">💾 Descargar</button>
-            <button onclick="cerrarTicket()" class="ticket-btn ticket-btn-close">Cerrar</button>
-        </div>
-    </div>
-`;
+    `;
 
-document.body.appendChild(modal);
-
-    // Guardar para imprimir/descargar
+    document.body.appendChild(modal);
     window.currentTicket = { ticket, total, fecha, cart };
+    
+    // ✅ Cerrar con tecla Escape
+    const closeOnEscape = (e) => {
+        if (e.key === 'Escape') {
+            cerrarTicket();
+            document.removeEventListener('keydown', closeOnEscape);
+        }
+    };
+    document.addEventListener('keydown', closeOnEscape);
 }
 
 function cerrarTicket() {
@@ -190,48 +168,58 @@ cargarCarrusel();
 // ==========================
 // CARGAR PRODUCTOS
 // ==========================
+// Variable global para mantener referencia a los productos
+let productsCache = [];
+
 async function cargarProductos(){
-
-  try{
-
+  try {
     const response = await fetch("/api/products");
     const products = await response.json();
+    
+    // ✅ Guardar en caché para usar en el event listener
+    productsCache = products;
 
     const contenedor = document.getElementById("productos");
-
     contenedor.innerHTML = "";
 
-    products.forEach(product =>{
-
+    products.forEach(product => {
       const card = document.createElement("div");
       card.classList.add("card");
 
+      // ✅ Template limpio con alt, loading y data-attribute
       card.innerHTML = `
-      <img src="${product.image}">
-      
-      <div class="card-info">
-
-      <h3>${product.name}</h3>
-
-      <div>$${product.price} MXN</div>
-
-      <div>Stock: ${product.stock}</div>
-
-      <button onclick='addToCart(${JSON.stringify(product)})'>
-      Agregar al carrito
-      </button>
-
-      </div>
+        <img src="${product.image}" alt="${product.name}" loading="lazy">
+        <div class="card-info">
+          <h3>${escapeHtml(product.name)}</h3>
+          <div>$${product.price} MXN</div>
+          <div>Stock: ${product.stock}</div>
+          <button class="add-to-cart-btn" data-product-id="${product._id}">
+            Agregar al carrito
+          </button>
+        </div>
       `;
-
       contenedor.appendChild(card);
-
     });
 
-  }catch(error){
-    console.error("Error cargando productos:",error);
-  }
+    // ✅ Event listener delegado (FUERA del forEach)
+    contenedor.addEventListener('click', (e) => {
+      if (e.target.classList.contains('add-to-cart-btn')) {
+        const productId = e.target.getAttribute('data-product-id');
+        const product = productsCache.find(p => p._id === productId);
+        if (product) addToCart(product);
+      }
+    });
 
+  } catch(error) {
+    console.error("Error cargando productos:", error);
+  }
+}
+
+// ✅ Función auxiliar para prevenir XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 

@@ -768,3 +768,110 @@ html {
     scroll-behavior: smooth;
     scroll-padding-top: 100px; /* Ajusta según la altura de tu navbar */
 }
+
+.toast-notification {
+    position: fixed;
+    top: 1.25rem; /* ✅ 20px → 1.25rem */
+    right: 1.25rem;
+    padding: 0.75rem 1.5rem; /* ✅ 12px 24px → rem */
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 500;
+    font-size: 1rem; /* ✅ Tamaño relativo */
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    max-width: 90vw; /* ✅ Evita desbordamiento horizontal */
+    word-wrap: break-word;
+}
+
+.toast-notification.success {
+    background: var(--toast-success, #22c55e);
+}
+
+.toast-notification.error {
+    background: var(--badge-bg, #ef4444);
+}
+
+.toast-notification.fade-out {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(150px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+/* ✅ Media query para zoom extremo o pantallas pequeñas */
+@media (max-width: 480px) {
+    .toast-notification {
+        top: 0.75rem;
+        right: 0.75rem;
+        left: 0.75rem;
+        max-width: calc(100vw - 1.5rem);
+    }
+}
+
+.ticket-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--modal-overlay, rgba(0,0,0,0.7));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    padding: 1rem; /* ✅ Espacio para que el modal no toque bordes */
+}
+
+.ticket-content-box {
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #000000);
+    padding: 1.5rem; /* ✅ 25px → 1.5rem */
+    border-radius: 0.75rem;
+    max-width: 95vw; /* ✅ 90% → 95vw para mejor escalado */
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.1));
+}
+
+.ticket-text {
+    background: var(--bg-tertiary, #f5f5f5);
+    color: var(--text-primary, #000000);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem; /* ✅ 13px → 0.875rem */
+    line-height: 1.6; /* ✅ Mejor legibilidad al hacer zoom */
+    white-space: pre-wrap;
+    word-wrap: break-word; /* ✅ Rompe líneas largas */
+    margin: 1rem 0;
+    overflow-x: auto; /* ✅ Scroll horizontal si el texto es muy largo */
+}
+
+.ticket-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap; /* ✅ Botones bajan de línea si no caben */
+    margin-top: 1.25rem;
+}
+
+.ticket-btn {
+    padding: 0.625rem 1.25rem; /* ✅ 10px 20px → rem */
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    min-height: 44px; /* ✅ Accesibilidad táctil */
+    min-width: 44px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    color: white;
+}
