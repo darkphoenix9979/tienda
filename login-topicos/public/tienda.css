@@ -764,3 +764,7 @@ body.guided-reading-active .guided-reading-highlight {
     opacity: 1;
 }
 
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px; /* Ajusta según la altura de tu navbar */
+}
