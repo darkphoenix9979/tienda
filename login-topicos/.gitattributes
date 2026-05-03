@@ -1,0 +1,14 @@
+# .gitattributes
+
+# Forzar LF en archivos de código (consistencia multiplataforma)
+*.js text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Archivos binarios sin conversión
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

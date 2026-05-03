@@ -517,50 +517,82 @@ cargarCarritoModal();
 
 
 // ==========================
-// SIMULAR COMPRA - MEJORAS #2 y #4
+// ✅ SIMULAR COMPRA - CON MERCADO PAGO
 // ==========================
 async function simularCompra(){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-if(cart.length === 0){
+  if(cart.length === 0){
     showNotification("⚠️ El carrito está vacío", "error");
     return;
-}
+  }
 
-try {
-    // ✅ MEJORA #2: Actualizar stock de cada producto en la BD
+  // ✅ Mostrar indicador de carga
+  const btnComprar = document.querySelector('#carrito button[onclick="simularCompra()"]');
+  const originalText = btnComprar?.innerText;
+  if(btnComprar) {
+    btnComprar.disabled = true;
+    btnComprar.innerText = 'Procesando...';
+  }
+
+  try {
+    // 🔒 VALIDACIÓN CRÍTICA: Verificar stock en backend ANTES de crear preferencia
+    // (esto ya lo haces, pero es crucial mantenerlo)
     for (const item of cart) {
-        const response = await fetch(`/api/products/${item._id}/update-stock`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ quantity: item.quantity })
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || "Error actualizando stock");
-        }
+      const response = await fetch(`/api/products/${item._id}/update-stock`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: item.quantity, reserve: true }) // ✅ Reservar temporalmente
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `Stock insuficiente para: ${item.name}`);
+      }
     }
 
-    // ✅ MEJORA #4: Generar ticket antes de vaciar carrito
+    // 💳 INTEGRACIÓN CON MERCADO PAGO
+    const mpResult = await MercadoPagoModule.crearPreferenciaPago(cart, {
+      email: localStorage.getItem('email'),
+      name: localStorage.getItem('username')
+    });
+
+    // ✅ Generar ticket ANTES de redirigir (para registro local)
     generateTicket(cart);
 
-    // ✅ Vaciar carrito
+    // ✅ Vaciar carrito local (se restaura si el pago falla)
     localStorage.removeItem("cart");
     cargarCarrito();
     cargarCarritoModal();
     
-    showNotification("🎉 Compra realizada con éxito");
+    showNotification("🔄 Redirigiendo a Mercado Pago...");
 
-    // ✅ Recargar productos para ver stock actualizado
-    cargarProductos();
+    // ✅ Redirección segura a Checkout Pro
+    setTimeout(() => {
+      mpResult.redirect();
+    }, 1500);
 
-} catch (error) {
+  } catch (error) {
     console.error("Error en compra:", error);
-    showNotification("❌ Error al procesar la compra", "error");
-}
-
+    
+    // 🔙 Revertir reserva de stock si falla antes de redirigir
+    for (const item of cart) {
+      await fetch(`/api/products/${item._id}/update-stock`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: item.quantity, release: true })
+      }).catch(() => {}); // Ignorar errores en rollback
+    }
+    
+    showNotification(`❌ ${error.message || 'Error al procesar el pago'}`, "error");
+    
+  } finally {
+    // ✅ Restaurar botón
+    if(btnComprar) {
+      btnComprar.disabled = false;
+      btnComprar.innerText = originalText || 'Comprar';
+    }
+  }
 }
 
 
@@ -625,6 +657,150 @@ if (document.readyState === 'loading') {
 } else {
   initThemeToggle();
 }
+
+// ==========================
+// 💳 MERCADO PAGO - MÓDULO ENCAPSULADO
+// ==========================
+const MercadoPagoModule = (function() {
+  'use strict';
+  
+  // ✅ Configuración: SOLO public_key en frontend
+  const PUBLIC_KEY = 'TU_PUBLIC_KEY_AQUI'; // ⚠️ Reemplazar o usar variable de entorno en build
+  let mpInstance = null;
+  let isInitialized = false;
+
+  // ✅ Inicialización perezosa (lazy loading)
+  async function init() {
+    if (isInitialized && mpInstance) return mpInstance;
+    
+    try {
+      // Cargar SDK de Mercado Pago dinámicamente
+      if (!window.MercadoPago) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://sdk.mercadopago.com/js/v2';
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error('Error cargando SDK de Mercado Pago'));
+          document.head.appendChild(script);
+        });
+      }
+      
+      mpInstance = new window.MercadoPago(PUBLIC_KEY, {
+        locale: 'es-MX' // ✅ Ajustar según región
+      });
+      
+      isInitialized = true;
+      return mpInstance;
+    } catch (error) {
+      console.error('[MP-INIT] Error:', error);
+      throw new Error('No se pudo inicializar Mercado Pago');
+    }
+  }
+
+  // ✅ Función principal: Crear preferencia y obtener URL de pago
+  async function crearPreferenciaPago(cart, userData = {}) {
+    if (!cart || cart.length === 0) {
+      throw new Error('El carrito está vacío');
+    }
+
+    // 🔒 Validar que el usuario esté autenticado
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Debes iniciar sesión para realizar un pago');
+    }
+
+    // Preparar items para el backend (sin precios sensibles)
+    const items = cart.map(item => ({
+      id: item._id,
+      quantity: item.quantity
+      // ✅ NO enviar price desde frontend - el backend lo valida
+    }));
+
+    try {
+      // ✅ Llamada segura al backend (nunca directo a MP desde frontend)
+      const response = await fetch('/api/payment/create-preference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ✅ Autenticación
+        },
+        body: JSON.stringify({
+          items,
+          payer: {
+            email: userData.email || localStorage.getItem('email'),
+            name: userData.name || localStorage.getItem('username')
+          },
+          backUrls: {
+            success: `${window.location.origin}/pago-exitoso`,
+            failure: `${window.location.origin}/pago-fallido`
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error creando preferencia de pago');
+      }
+
+      const { init_point, id } = await response.json();
+      
+      return {
+        preferenceId: id,
+        checkoutUrl: init_point,
+        redirect: () => {
+          // ✅ Redirección segura a Checkout Pro
+          window.location.href = init_point;
+        }
+      };
+
+    } catch (error) {
+      console.error('[MP-PAYMENT] Error:', error);
+      throw error; // Propagar para manejo en UI
+    }
+  }
+
+  // ✅ Función opcional: Renderizar botón Wallet Brick (si usas Checkout Transparente)
+  async function renderWalletButton(containerId, preferenceId, onSuccess, onError) {
+    try {
+      const mp = await init();
+      const bricksBuilder = mp.bricks();
+      
+      const controller = await bricksBuilder.create('wallet', containerId, {
+        initialization: { preferenceId },
+        customization: {
+          visual: { style: { theme: 'light' } }
+        },
+        callbacks: {
+          onReady: () => console.log('[MP-WALLET] Brick listo'),
+          onError: (error) => {
+            console.error('[MP-WALLET] Error:', error);
+            onError?.(error);
+          },
+          onPayment: (payment) => {
+            console.log('[MP-WALLET] Pago completado:', payment);
+            onSuccess?.(payment);
+          }
+        }
+      });
+      
+      return controller;
+    } catch (error) {
+      console.error('[MP-WALLET-RENDER] Error:', error);
+      throw error;
+    }
+  }
+
+  // ✅ API pública del módulo (encapsulamiento)
+  return {
+    init,
+    crearPreferenciaPago,
+    renderWalletButton,
+    // ✅ Getter seguro para verificar estado
+    isReady: () => isInitialized && !!mpInstance
+  };
+
+})();
 
 
 // ==========================

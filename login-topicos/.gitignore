@@ -1,0 +1,38 @@
+# .gitignore
+
+# 🔴 Node.js - NUNCA subir esto
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 🔴 Variables de entorno - CRÍTICO PARA SEGURIDAD
+.env
+.env.local
+.env*.local
+
+# 🔴 Logs y temporales
+logs/
+*.log
+tmp/
+temp/
+
+# 🔴 IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 🔴 Sistema operativo
+.DS_Store
+Thumbs.db
+
+# 🔴 Build/output (si aplica)
+dist/
+build/
+public/uploads/
+
+# ✅ SÍ subir:
+# - package.json
+# - package-lock.json
+# - Tu código fuente (.js, .html, .css)
+# - .gitignore (este archivo)

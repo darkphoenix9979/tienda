@@ -129,6 +129,10 @@ res.status(500).json({message:"Error obteniendo usuarios"});
 
 });
 
+// app.js o index.js
+const paymentRoutes = require('./routes/payment');
+app.use('/api/payment', paymentRoutes);
+
 /* ==========================
    PUERTO DEL SERVIDOR
 ========================== */
