@@ -1,32 +1,33 @@
-// Protección login
-//if(!localStorage.getItem("token")){
-//    window.location.href="login.html";
-//}
-
-// Bloquear volver atrás después de logout
-//window.addEventListener("pageshow", function (event) {
-//  if (!localStorage.getItem("token")) {
-//        window.location.href = "login.html";
-//    }
-//});
+// ==========================
+// TIENDA.JS - VERSIÓN CORREGIDA
+// ✅ Eventos únicos, flujo de pago seguro, sin process.env en frontend
+// ==========================
 
 // ==========================
-// NOTIFICACIÓN FLOTANTE (TOAST) - MEJORA #1
+// VARIABLES GLOBALES
+// ==========================
+let productsCache = [];
+let cartListenerAdded = false;
+
+// ✅ CONFIGURACIÓN MERCADOPAGO (Public Key es segura en frontend)
+// 🔧 Reemplaza con tu Public Key real de https://www.mercadopago.com/developers
+const MP_PUBLIC_KEY = 'APP_USR-8876003953346216-050314-f1665186f6db2ae645e60c38620ef667-3372667693';
+
+// ==========================
+// NOTIFICACIÓN FLOTANTE (TOAST)
 // ==========================
 function showNotification(message, type = "success") {
     const existing = document.querySelector('.toast-notification');
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
-    // ✅ Usar clases CSS definidas en tu hoja de estilos
     toast.className = `toast-notification ${type}`;
-    toast.setAttribute('role', 'alert'); // ✅ Accesibilidad
+    toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', 'polite');
     toast.textContent = message;
     
     document.body.appendChild(toast);
 
-    // ✅ Animación vía CSS (ya definida en tu CSS o agregarla)
     setTimeout(() => {
         toast.classList.add('fade-out');
         setTimeout(() => toast.remove(), 300);
@@ -34,7 +35,7 @@ function showNotification(message, type = "success") {
 }
 
 // ==========================
-// GENERAR TICKET DE COMPRA - MEJORA #4
+// GENERAR TICKET DE COMPRA
 // ==========================
 function generateTicket(cart) {
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -61,12 +62,9 @@ ${cart.map(item =>
 ╚════════════════════════════════╝
     `;
 
-    // Mostrar en modal// Dentro de generateTicket(), reemplaza la creación del modal por esto:
-
-// Mostrar en modal
     const modal = document.createElement('div');
     modal.id = 'ticketModal';
-    modal.className = 'ticket-modal'; // ✅ Clase CSS en vez de inline
+    modal.className = 'ticket-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'ticketTitle');
@@ -89,7 +87,6 @@ ${cart.map(item =>
     document.body.appendChild(modal);
     window.currentTicket = { ticket, total, fecha, cart };
     
-    // ✅ Cerrar con tecla Escape
     const closeOnEscape = (e) => {
         if (e.key === 'Escape') {
             cerrarTicket();
@@ -134,7 +131,6 @@ async function cargarCarrusel() {
   try {
     const response = await fetch("/api/carousel");
     const images = await response.json();
-
     const hero = document.getElementById("heroCarousel");
 
     images.forEach((item, index) => {
@@ -145,7 +141,6 @@ async function cargarCarrusel() {
     });
 
     iniciarCarrusel();
-
   } catch (error) {
     console.error("Error cargando carrusel:", error);
   }
@@ -164,19 +159,13 @@ function iniciarCarrusel() {
 
 cargarCarrusel();
 
-
 // ==========================
-// CARGAR PRODUCTOS
+// CARGAR PRODUCTOS (con evento único)
 // ==========================
-// Variable global para mantener referencia a los productos
-let productsCache = [];
-
 async function cargarProductos(){
   try {
     const response = await fetch("/api/products");
     const products = await response.json();
-    
-    // ✅ Guardar en caché para usar en el event listener
     productsCache = products;
 
     const contenedor = document.getElementById("productos");
@@ -185,10 +174,8 @@ async function cargarProductos(){
     products.forEach(product => {
       const card = document.createElement("div");
       card.classList.add("card");
-
-      // ✅ Template limpio con alt, loading y data-attribute
       card.innerHTML = `
-        <img src="${product.image}" alt="${product.name}" loading="lazy">
+        <img src="${product.image}" alt="${escapeHtml(product.name)}" loading="lazy">
         <div class="card-info">
           <h3>${escapeHtml(product.name)}</h3>
           <div>$${product.price} MXN</div>
@@ -201,74 +188,70 @@ async function cargarProductos(){
       contenedor.appendChild(card);
     });
 
-    // ✅ Event listener delegado (FUERA del forEach)
-    contenedor.addEventListener('click', (e) => {
-      if (e.target.classList.contains('add-to-cart-btn')) {
-        const productId = e.target.getAttribute('data-product-id');
-        const product = productsCache.find(p => p._id === productId);
-        if (product) addToCart(product);
-      }
-    });
+    // ✅ Delegación de eventos - solo se añade UNA vez
+    if (!cartListenerAdded) {
+      contenedor.addEventListener('click', (e) => {
+        if (e.target.classList.contains('add-to-cart-btn')) {
+          const productId = e.target.getAttribute('data-product-id');
+          const product = productsCache.find(p => p._id === productId);
+          if (product) addToCart(product);
+        }
+      });
+      cartListenerAdded = true;
+    }
 
   } catch(error) {
     console.error("Error cargando productos:", error);
   }
 }
 
-// ✅ Función auxiliar para prevenir XSS
+// ✅ Prevención XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-
 // ==========================
-// USUARIO / ESTADO DE SESION
+// USUARIO / ESTADO DE SESIÓN
 // ==========================
+function actualizarUIUsuario() {
+    const username = localStorage.getItem("username");
+    const token = localStorage.getItem("token");
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    const avatar = document.getElementById("avatar");
+    const dropdown = document.getElementById("dropdown");
 
-const username = localStorage.getItem("username");
-const token = localStorage.getItem("token");
+    if(!usernameDisplay || !avatar || !dropdown) return;
 
-const usernameDisplay = document.getElementById("usernameDisplay");
-const avatar = document.getElementById("avatar");
-const dropdown = document.getElementById("dropdown");
-
-if(token && username){
-
-    usernameDisplay.innerText = username;
-    avatar.innerText = username.charAt(0).toUpperCase();
-
-    dropdown.innerHTML = `
-    <button class="menu-btn" onclick="logout()">Cerrar sesión</button>
-    `;
-
-}else{
-
-    usernameDisplay.innerText = "Invitado";
-    avatar.innerText = "?";
-
-    dropdown.innerHTML = `
-    <button class="menu-btn" onclick="irLogin()">Iniciar sesión</button>
-    `;
+    if(token && username){
+        usernameDisplay.innerText = username;
+        avatar.innerText = username.charAt(0).toUpperCase();
+        dropdown.innerHTML = `<button class="menu-btn" onclick="logout()">Cerrar sesión</button>`;
+    } else {
+        usernameDisplay.innerText = "Invitado";
+        avatar.innerText = "?";
+        dropdown.innerHTML = `<button class="menu-btn" onclick="irLogin()">Iniciar sesión</button>`;
+    }
 }
-
 
 // ==========================
 // DROPDOWN USUARIO
 // ==========================
-const userMenu = document.getElementById("userMenu");
-const arrow = document.getElementById("arrow");
+function initUserDropdown() {
+    const userMenu = document.getElementById("userMenu");
+    const arrow = document.getElementById("arrow");
+    const dropdown = document.getElementById("dropdown");
 
-if (userMenu) {
-  userMenu.addEventListener("click", () => {
-    dropdown.classList.toggle("active");
-    arrow.style.transform = dropdown.classList.contains("active")
-      ? "rotate(180deg)"
-      : "rotate(0deg)";
-  });
+    if (userMenu && dropdown && arrow) {
+      userMenu.addEventListener("click", () => {
+        dropdown.classList.toggle("active");
+        arrow.style.transform = dropdown.classList.contains("active")
+          ? "rotate(180deg)"
+          : "rotate(0deg)";
+      });
+    }
 }
-
 
 // ==========================
 // LOGOUT
@@ -276,9 +259,9 @@ if (userMenu) {
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("username");
+  localStorage.removeItem("cart_pending");
   window.location.replace("tienda.html");
 }
-
 
 // ==========================
 // IR A LOGIN
@@ -287,22 +270,17 @@ function irLogin() {
   window.location.href = "login.html";
 }
 
-
 // ==========================
-// AGREGAR AL CARRITO - MEJORA #1 (Notificación flotante)
+// AGREGAR AL CARRITO
 // ==========================
 function addToCart(product) {
-
   if (!localStorage.getItem("token")) {
     showNotification("⚠️ Debes iniciar sesión para comprar", "error");
-    setTimeout(() => {
-        window.location.href = "login.html";
-    }, 1500);
+    setTimeout(() => window.location.href = "login.html", 1500);
     return;
   }
 
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
   const index = cart.findIndex(item => item._id === product._id);
 
   if (index !== -1) {
@@ -318,10 +296,7 @@ function addToCart(product) {
   }
 
   localStorage.setItem("cart", JSON.stringify(cart));
-
-  // ✅ MEJORA #1: Notificación flotante en lugar de alert
   showNotification("✅ Producto agregado al carrito");
-
   cargarCarrito();
   cargarCarritoModal();
 }
@@ -330,482 +305,382 @@ function addToCart(product) {
 // MOSTRAR CARRITO (SECCIÓN)
 // ==========================
 function cargarCarrito(){
+    const contenedor = document.getElementById("carrito");
+    const cartCount = document.getElementById("cartCount");
 
-const contenedor = document.getElementById("carrito");
-const cartCount = document.getElementById("cartCount");
+    if(!contenedor) return;
 
-if(!contenedor) return;
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    contenedor.innerHTML = "";
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let total = 0;
+    let totalItems = 0;
 
-contenedor.innerHTML="";
+    cart.forEach((item, index) => {
+        total += item.price * item.quantity;
+        totalItems += item.quantity;
 
-let total = 0;
-let totalItems = 0;
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.innerHTML = `
+            <div class="cart-img">
+                <img src="${item.image}" alt="${escapeHtml(item.name)}">
+            </div>
+            <div class="card-info">
+                <div class="product-name">${escapeHtml(item.name)}</div>
+                <div class="price">$${item.price} MXN</div>
+                <div class="quantity-control">
+                    <button onclick="cambiarCantidad(${index},-1)">-</button>
+                    <span>${item.quantity}</span>
+                    <button onclick="cambiarCantidad(${index},1)">+</button>
+                </div>
+                <button onclick="eliminarProducto(${index})">Eliminar</button>
+            </div>
+        `;
+        contenedor.appendChild(card);
+    });
 
-cart.forEach((item,index)=>{
+    if(cartCount) cartCount.innerText = totalItems;
 
-total += item.price * item.quantity;
-totalItems += item.quantity;
-
-const card = document.createElement("div");
-card.classList.add("card");
-
-card.innerHTML = `
-<div class="cart-img">
-<img src="${item.image}">
-</div>
-
-<div class="card-info">
-
-<div class="product-name">${item.name}</div>
-
-<div class="price">$${item.price} MXN</div>
-
-<div class="quantity-control">
-<button onclick="cambiarCantidad(${index},-1)">-</button>
-<span>${item.quantity}</span>
-<button onclick="cambiarCantidad(${index},1)">+</button>
-</div>
-
-<button onclick="eliminarProducto(${index})">Eliminar</button>
-
-</div>
-`;
-
-contenedor.appendChild(card);
-
-});
-
-if(cartCount){
-cartCount.innerText = totalItems;
+    const totalHTML = document.createElement("div");
+    totalHTML.innerHTML = `
+        <h3>Total: $${total.toFixed(2)} MXN</h3>
+        <button onclick="simularCompra()">Comprar</button>
+    `;
+    contenedor.appendChild(totalHTML);
 }
-
-const totalHTML = document.createElement("div");
-
-totalHTML.innerHTML = `
-<h3>Total: $${total.toFixed(2)} MXN</h3>
-<button onclick="simularCompra()">Comprar</button>
-`;
-
-contenedor.appendChild(totalHTML);
-
-}
-
 
 // ==========================
 // MODAL DEL CARRITO
 // ==========================
-const cartIcon = document.querySelector(".cart-icon");
-const cartModal = document.getElementById("cartModal");
-const closeCart = document.getElementById("closeCart");
+function initCartModal() {
+    const cartIcon = document.querySelector(".cart-icon");
+    const cartModal = document.getElementById("cartModal");
+    const closeCart = document.getElementById("closeCart");
 
-if(cartIcon && cartModal){
+    if(cartIcon && cartModal){
+        cartIcon.addEventListener("click", () => {
+            cartModal.style.display = "flex";
+            cargarCarritoModal();
+        });
+    }
 
-cartIcon.addEventListener("click", () => {
+    if(closeCart && cartModal){
+        closeCart.addEventListener("click", () => {
+            cartModal.style.display = "none";
+        });
+    }
 
-cartModal.style.display = "flex";
-cargarCarritoModal();
-
-});
-
+    // Cerrar modal al hacer clic fuera del contenido
+    if(cartModal) {
+        cartModal.addEventListener("click", (e) => {
+            if(e.target === cartModal) {
+                cartModal.style.display = "none";
+            }
+        });
+    }
 }
-
-if(closeCart){
-
-closeCart.addEventListener("click", () => {
-
-cartModal.style.display = "none";
-
-});
-
-}
-
 
 function cargarCarritoModal(){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const contenedor = document.getElementById("cartItems");
+    const totalText = document.getElementById("cartTotal");
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    if(!contenedor) return;
+    contenedor.innerHTML = "";
+    let total = 0;
 
-const contenedor = document.getElementById("cartItems");
-const totalText = document.getElementById("cartTotal");
+    cart.forEach((item, index) => {
+        total += item.price * item.quantity;
+        const div = document.createElement("div");
+        div.classList.add("cart-item");
+        div.innerHTML = `
+            <img src="${item.image}" alt="${escapeHtml(item.name)}">
+            <div>
+                ${escapeHtml(item.name)}
+                <div>$${item.price} MXN</div>
+                <div>
+                    <button onclick="cambiarCantidad(${index},-1)">-</button>
+                    ${item.quantity}
+                    <button onclick="cambiarCantidad(${index},1)">+</button>
+                </div>
+            </div>
+        `;
+        contenedor.appendChild(div);
+    });
 
-if(!contenedor) return;
-
-contenedor.innerHTML = "";
-
-let total = 0;
-
-cart.forEach((item,index)=>{
-
-total += item.price * item.quantity;
-
-const div = document.createElement("div");
-
-div.classList.add("cart-item");
-
-div.innerHTML = `
-
-<img src="${item.image}">
-
-<div>
-
-${item.name}
-
-<div>$${item.price} MXN</div>
-
-<div>
-
-<button onclick="cambiarCantidad(${index},-1)">-</button>
-
-${item.quantity}
-
-<button onclick="cambiarCantidad(${index},1)">+</button>
-
-</div>
-
-</div>
-
-`;
-
-contenedor.appendChild(div);
-
-});
-
-if(totalText){
-totalText.innerText = "Total: $" + total.toFixed(2) + " MXN";
+    if(totalText) totalText.innerText = "Total: $" + total.toFixed(2) + " MXN";
 }
-
-}
-
 
 // ==========================
 // CAMBIAR CANTIDAD
 // ==========================
-function cambiarCantidad(index,cambio){
-
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-cart[index].quantity += cambio;
-
-if(cart[index].quantity <= 0){
-cart.splice(index,1);
+function cambiarCantidad(index, cambio){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart[index].quantity += cambio;
+    
+    if(cart[index].quantity <= 0){
+        cart.splice(index, 1);
+    }
+    
+    localStorage.setItem("cart", JSON.stringify(cart));
+    cargarCarrito();
+    cargarCarritoModal();
 }
-
-localStorage.setItem("cart",JSON.stringify(cart));
-
-cargarCarrito();
-cargarCarritoModal();
-
-}
-
 
 // ==========================
 // ELIMINAR PRODUCTO
 // ==========================
 function eliminarProducto(index){
-
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-cart.splice(index,1);
-
-localStorage.setItem("cart",JSON.stringify(cart));
-
-cargarCarrito();
-cargarCarritoModal();
-
-}
-
-
-// ==========================
-// ✅ SIMULAR COMPRA - CON MERCADO PAGO
-// ==========================
-async function simularCompra(){
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-  if(cart.length === 0){
-    showNotification("⚠️ El carrito está vacío", "error");
-    return;
-  }
-
-  // ✅ Mostrar indicador de carga
-  const btnComprar = document.querySelector('#carrito button[onclick="simularCompra()"]');
-  const originalText = btnComprar?.innerText;
-  if(btnComprar) {
-    btnComprar.disabled = true;
-    btnComprar.innerText = 'Procesando...';
-  }
-
-  try {
-    // 🔒 VALIDACIÓN CRÍTICA: Verificar stock en backend ANTES de crear preferencia
-    // (esto ya lo haces, pero es crucial mantenerlo)
-    for (const item of cart) {
-      const response = await fetch(`/api/products/${item._id}/update-stock`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: item.quantity, reserve: true }) // ✅ Reservar temporalmente
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || `Stock insuficiente para: ${item.name}`);
-      }
-    }
-
-    // 💳 INTEGRACIÓN CON MERCADO PAGO
-    const mpResult = await MercadoPagoModule.crearPreferenciaPago(cart, {
-      email: localStorage.getItem('email'),
-      name: localStorage.getItem('username')
-    });
-
-    // ✅ Generar ticket ANTES de redirigir (para registro local)
-    generateTicket(cart);
-
-    // ✅ Vaciar carrito local (se restaura si el pago falla)
-    localStorage.removeItem("cart");
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart.splice(index, 1);
+    localStorage.setItem("cart", JSON.stringify(cart));
     cargarCarrito();
     cargarCarritoModal();
-    
-    showNotification("🔄 Redirigiendo a Mercado Pago...");
-
-    // ✅ Redirección segura a Checkout Pro
-    setTimeout(() => {
-      mpResult.redirect();
-    }, 1500);
-
-  } catch (error) {
-    console.error("Error en compra:", error);
-    
-    // 🔙 Revertir reserva de stock si falla antes de redirigir
-    for (const item of cart) {
-      await fetch(`/api/products/${item._id}/update-stock`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: item.quantity, release: true })
-      }).catch(() => {}); // Ignorar errores en rollback
-    }
-    
-    showNotification(`❌ ${error.message || 'Error al procesar el pago'}`, "error");
-    
-  } finally {
-    // ✅ Restaurar botón
-    if(btnComprar) {
-      btnComprar.disabled = false;
-      btnComprar.innerText = originalText || 'Comprar';
-    }
-  }
 }
 
+// ==========================
+// ✅ SIMULAR COMPRA - VERSIÓN CORREGIDA
+// ==========================
+async function simularCompra(){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    
+    if(cart.length === 0){
+        showNotification("⚠️ El carrito está vacío", "error");
+        return;
+    }
+
+    // ✅ Mostrar indicador de carga
+    const btnComprar = document.querySelector('#carrito button[onclick="simularCompra()"]');
+    const originalText = btnComprar?.innerText;
+    if(btnComprar) {
+        btnComprar.disabled = true;
+        btnComprar.innerText = 'Procesando...';
+    }
+
+    try {
+        // ✅ 1. VALIDAR STOCK (solo lectura, sin modificar)
+        for (const item of cart) {
+            const response = await fetch(`/api/products/${item._id}`);
+            if (!response.ok) throw new Error(`Error verificando: ${item.name}`);
+            const product = await response.json();
+            if (product.stock < item.quantity) {
+                throw new Error(`Stock insuficiente para: ${item.name}`);
+            }
+        }
+
+        // ✅ 2. CREAR PREFERENCIA DE PAGO (llamada a TU backend)
+        const mpResult = await MercadoPagoModule.crearPreferenciaPago(cart, {
+            email: localStorage.getItem('email'),
+            name: localStorage.getItem('username')
+        });
+
+        // ✅ 3. GUARDAR CARRITO PENDIENTE (para recuperar si cancela)
+        localStorage.setItem('cart_pending', JSON.stringify(cart));
+
+        // ✅ 4. MOSTRAR TICKET COMO BORRADOR (opcional, visual)
+        generateTicket(cart);
+
+        showNotification("🔄 Redirigiendo a pago seguro...");
+
+        // ✅ 5. REDIRECCIONAR (solo UNA vez)
+        setTimeout(() => {
+            mpResult.redirect();
+        }, 1000);
+
+    } catch (error) {
+        console.error("Error en compra:", error);
+        showNotification(`❌ ${error.message || 'Error al procesar el pago'}`, "error");
+        localStorage.removeItem('cart_pending');
+    } finally {
+        // ✅ Restaurar botón
+        if(btnComprar) {
+            btnComprar.disabled = false;
+            btnComprar.innerText = originalText || 'Comprar';
+        }
+    }
+}
 
 // ==========================
 // VACIAR CARRITO
 // ==========================
-const clearCartBtn = document.getElementById("clearCartBtn");
-
-if(clearCartBtn){
-
-clearCartBtn.addEventListener("click",()=>{
-
-localStorage.removeItem("cart");
-
-cargarCarrito();
-cargarCarritoModal();
-
-});
-
+function initClearCart() {
+    const clearCartBtn = document.getElementById("clearCartBtn");
+    if(clearCartBtn){
+        clearCartBtn.addEventListener("click", () => {
+            localStorage.removeItem("cart");
+            cargarCarrito();
+            cargarCarritoModal();
+            showNotification("🗑️ Carrito vaciado");
+        });
+    }
 }
 
 // ==========================
 // 🌙/☀️ TOGGLE MODO OSCURO/CLARO
 // ==========================
 function initThemeToggle() {
-  const toggle = document.getElementById('theme-toggle');
-  const root = document.documentElement;
-  
-  if (!toggle) return;
-  
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'light') {
-    root.setAttribute('data-theme', 'light');
-    toggle.textContent = '🌙';
-  } else {
-    toggle.textContent = '☀️';
-  }
-
-  toggle.addEventListener('click', () => {
-    const isDark = root.getAttribute('data-theme') !== 'light';
-    if (isDark) {
-      root.setAttribute('data-theme', 'light');
-      localStorage.setItem('theme', 'light');
-      toggle.textContent = '🌙';
-      if (typeof showNotification === 'function') {
-        showNotification('☀️ Modo claro activado');
-      }
+    const toggle = document.getElementById('theme-toggle');
+    const root = document.documentElement;
+    
+    if (!toggle) return;
+    
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        toggle.textContent = '🌙';
     } else {
-      root.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'dark');
-      toggle.textContent = '☀️';
-      if (typeof showNotification === 'function') {
-        showNotification('🌙 Modo nocturno activado');
-      }
+        toggle.textContent = '☀️';
     }
-  });
-}
 
-// Inicializar cuando el DOM esté listo
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initThemeToggle);
-} else {
-  initThemeToggle();
+    toggle.addEventListener('click', () => {
+        const isDark = root.getAttribute('data-theme') !== 'light';
+        if (isDark) {
+            root.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            toggle.textContent = '🌙';
+            showNotification?.('☀️ Modo claro activado');
+        } else {
+            root.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+            toggle.textContent = '☀️';
+            showNotification?.('🌙 Modo nocturno activado');
+        }
+    });
 }
 
 // ==========================
-// 💳 MERCADO PAGO - MÓDULO ENCAPSULADO
+// 💳 MERCADO PAGO - MÓDULO ENCAPSULADO (CORREGIDO)
 // ==========================
 const MercadoPagoModule = (function() {
-  'use strict';
-  
-  // ✅ Configuración: SOLO public_key en frontend
-  const PUBLIC_KEY = 'TU_PUBLIC_KEY_AQUI'; // ⚠️ Reemplazar o usar variable de entorno en build
-  let mpInstance = null;
-  let isInitialized = false;
-
-  // ✅ Inicialización perezosa (lazy loading)
-  async function init() {
-    if (isInitialized && mpInstance) return mpInstance;
+    'use strict';
     
-    try {
-      // Cargar SDK de Mercado Pago dinámicamente
-      if (!window.MercadoPago) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://sdk.mercadopago.com/js/v2';
-          script.async = true;
-          script.onload = resolve;
-          script.onerror = () => reject(new Error('Error cargando SDK de Mercado Pago'));
-          document.head.appendChild(script);
+    // ✅ Public Key segura para frontend (NO es secreto)
+    // 🔧 Reemplaza con tu clave real
+    const PUBLIC_KEY = MP_PUBLIC_KEY;
+    
+    let mpInstance = null;
+    let isInitialized = false;
+
+    async function init() {
+        if (isInitialized && mpInstance) return mpInstance;
+        
+        try {
+            if (!window.MercadoPago) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://sdk.mercadopago.com/js/v2';
+                    script.async = true;
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error('Error cargando SDK de Mercado Pago'));
+                    document.head.appendChild(script);
+                });
+            }
+            
+            mpInstance = new window.MercadoPago(PUBLIC_KEY, { locale: 'es-MX' });
+            isInitialized = true;
+            return mpInstance;
+        } catch (error) {
+            console.error('[MP-INIT] Error:', error);
+            throw new Error('No se pudo inicializar Mercado Pago');
+        }
+    }
+
+    async function crearPreferenciaPago(cart, userData = {}) {
+        if (!cart?.length) throw new Error('El carrito está vacío');
+        
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Debes iniciar sesión para realizar un pago');
+
+        // ✅ Solo envía IDs y cantidades - el backend valida precios
+        const items = cart.map(item => ({
+            id: item._id,
+            quantity: item.quantity
+        }));
+
+        const response = await fetch('/api/payment/create-preference', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                items,
+                payer: {
+                    email: userData.email || localStorage.getItem('email'),
+                    name: userData.name || localStorage.getItem('username')
+                },
+                backUrls: {
+                    success: `${window.location.origin}/pago-exitoso`,
+                    failure: `${window.location.origin}/pago-fallido`
+                }
+            })
         });
-      }
-      
-      mpInstance = new window.MercadoPago(PUBLIC_KEY, {
-        locale: 'es-MX' // ✅ Ajustar según región
-      });
-      
-      isInitialized = true;
-      return mpInstance;
-    } catch (error) {
-      console.error('[MP-INIT] Error:', error);
-      throw new Error('No se pudo inicializar Mercado Pago');
-    }
-  }
 
-  // ✅ Función principal: Crear preferencia y obtener URL de pago
-  async function crearPreferenciaPago(cart, userData = {}) {
-    if (!cart || cart.length === 0) {
-      throw new Error('El carrito está vacío');
-    }
-
-    // 🔒 Validar que el usuario esté autenticado
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('Debes iniciar sesión para realizar un pago');
-    }
-
-    // Preparar items para el backend (sin precios sensibles)
-    const items = cart.map(item => ({
-      id: item._id,
-      quantity: item.quantity
-      // ✅ NO enviar price desde frontend - el backend lo valida
-    }));
-
-    try {
-      // ✅ Llamada segura al backend (nunca directo a MP desde frontend)
-      const response = await fetch('/api/payment/create-preference', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // ✅ Autenticación
-        },
-        body: JSON.stringify({
-          items,
-          payer: {
-            email: userData.email || localStorage.getItem('email'),
-            name: userData.name || localStorage.getItem('username')
-          },
-          backUrls: {
-            success: `${window.location.origin}/pago-exitoso`,
-            failure: `${window.location.origin}/pago-fallido`
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error creando preferencia de pago');
-      }
-
-      const { init_point, id } = await response.json();
-      
-      return {
-        preferenceId: id,
-        checkoutUrl: init_point,
-        redirect: () => {
-          // ✅ Redirección segura a Checkout Pro
-          window.location.href = init_point;
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error creando preferencia de pago');
         }
-      };
 
-    } catch (error) {
-      console.error('[MP-PAYMENT] Error:', error);
-      throw error; // Propagar para manejo en UI
+        const { init_point, id } = await response.json();
+        
+        return {
+            preferenceId: id,
+            checkoutUrl: init_point,
+            redirect: () => { window.location.href = init_point; }
+        };
     }
-  }
 
-  // ✅ Función opcional: Renderizar botón Wallet Brick (si usas Checkout Transparente)
-  async function renderWalletButton(containerId, preferenceId, onSuccess, onError) {
-    try {
-      const mp = await init();
-      const bricksBuilder = mp.bricks();
-      
-      const controller = await bricksBuilder.create('wallet', containerId, {
-        initialization: { preferenceId },
-        customization: {
-          visual: { style: { theme: 'light' } }
-        },
-        callbacks: {
-          onReady: () => console.log('[MP-WALLET] Brick listo'),
-          onError: (error) => {
-            console.error('[MP-WALLET] Error:', error);
-            onError?.(error);
-          },
-          onPayment: (payment) => {
-            console.log('[MP-WALLET] Pago completado:', payment);
-            onSuccess?.(payment);
-          }
-        }
-      });
-      
-      return controller;
-    } catch (error) {
-      console.error('[MP-WALLET-RENDER] Error:', error);
-      throw error;
-    }
-  }
-
-  // ✅ API pública del módulo (encapsulamiento)
-  return {
-    init,
-    crearPreferenciaPago,
-    renderWalletButton,
-    // ✅ Getter seguro para verificar estado
-    isReady: () => isInitialized && !!mpInstance
-  };
-
+    return { 
+        init, 
+        crearPreferenciaPago, 
+        isReady: () => isInitialized && !!mpInstance 
+    };
 })();
 
+// ==========================
+// RECUPERAR CARRITO SI CANCELA PAGO
+// ==========================
+function initRecoverCart() {
+    const pendingCart = localStorage.getItem('cart_pending');
+    const currentCart = localStorage.getItem('cart');
+    
+    // Si hay carrito pendiente y no hay carrito actual, restaurar
+    if (pendingCart && !currentCart) {
+        localStorage.setItem('cart', pendingCart);
+        localStorage.removeItem('cart_pending');
+        showNotification("🛒 Tu carrito fue restaurado");
+        cargarCarrito();
+        cargarCarritoModal();
+    }
+}
 
 // ==========================
-// INICIAR
+// INICIALIZACIÓN PRINCIPAL
 // ==========================
-cargarProductos();
-cargarCarrito();
-cargarCarritoModal();
+document.addEventListener('DOMContentLoaded', () => {
+    // ✅ Inicializar componentes
+    actualizarUIUsuario();
+    initUserDropdown();
+    initCartModal();
+    initClearCart();
+    initThemeToggle();
+    initRecoverCart();
+    
+    // ✅ Cargar datos
+    cargarProductos();
+    cargarCarrito();
+    cargarCarritoModal();
+});
+
+// ✅ También ejecutar si el DOM ya está listo (para navegadores rápidos)
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    actualizarUIUsuario();
+    initUserDropdown();
+    initCartModal();
+    initClearCart();
+    initThemeToggle();
+    initRecoverCart();
+    cargarCarrito();
+    cargarCarritoModal();
+}
