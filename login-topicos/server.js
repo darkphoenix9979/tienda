@@ -48,7 +48,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/carousel", carouselRoutes);
 
 // ✅ NUEVO: Rutas de pago (MercadoPago)
-const paymentRoutes = require('./routes/payment.routes'); // ← Verifica el nombre del archivo
+const paymentRoutes = require('./routes/payment'); // ← Verifica el nombre del archivo
 app.use('/api/payment', paymentRoutes);
 
 // ✅ NUEVO: Rutas de webhooks (NOTIFICACIONES de MercadoPago)
