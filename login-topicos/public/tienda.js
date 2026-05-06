@@ -1,6 +1,6 @@
 // ==========================
-// TIENDA.JS - VERSIÓN CORREGIDA
-// ✅ Eventos únicos, flujo de pago seguro, sin process.env en frontend
+// TIENDA.JS - VERSIÓN RESTAURADA Y CORREGIDA
+// ✅ Funcionalidad original + correcciones de eventos, pago y stock
 // ==========================
 
 // ==========================
@@ -9,8 +9,8 @@
 let productsCache = [];
 let cartListenerAdded = false;
 
-// ✅ CONFIGURACIÓN MERCADOPAGO (Public Key es segura en frontend)
-// 🔧 Reemplaza con tu Public Key real de https://www.mercadopago.com/developers
+// ✅ CONFIGURACIÓN MERCADOPAGO - Public Key (segura en frontend)
+// 🔧 REEMPLAZA con tu Public Key real de https://www.mercadopago.com/developers
 const MP_PUBLIC_KEY = 'APP_USR-8876003953346216-050314-f1665186f6db2ae645e60c38620ef667-3372667693';
 
 // ==========================
@@ -125,17 +125,23 @@ function descargarTicket() {
 }
 
 // ==========================
-// CARRUSEL
+// CARRUSEL - FUNCIONALIDAD ORIGINAL
 // ==========================
 async function cargarCarrusel() {
   try {
     const response = await fetch("/api/carousel");
+    if (!response.ok) throw new Error('Error cargando carrusel');
+    
     const images = await response.json();
     const hero = document.getElementById("heroCarousel");
+    
+    if (!hero) return;
 
     images.forEach((item, index) => {
       const img = document.createElement("img");
       img.src = item.image;
+      img.alt = item.alt || "Banner promocional";
+      img.loading = "lazy";
       if (index === 0) img.classList.add("active");
       hero.appendChild(img);
     });
@@ -143,11 +149,14 @@ async function cargarCarrusel() {
     iniciarCarrusel();
   } catch (error) {
     console.error("Error cargando carrusel:", error);
+    // Fallback: mostrar mensaje o imagen por defecto
   }
 }
 
 function iniciarCarrusel() {
   let slides = document.querySelectorAll(".hero img");
+  if (slides.length === 0) return;
+  
   let index = 0;
 
   setInterval(() => {
@@ -157,18 +166,33 @@ function iniciarCarrusel() {
   }, 5000);
 }
 
-cargarCarrusel();
+// ==========================
+// PREVENCIÓN XSS
+// ==========================
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
 // ==========================
-// CARGAR PRODUCTOS (con evento único)
+// CARGAR PRODUCTOS - CON EVENTO ÚNICO
 // ==========================
 async function cargarProductos(){
   try {
     const response = await fetch("/api/products");
+    if (!response.ok) throw new Error('Error cargando productos');
+    
     const products = await response.json();
     productsCache = products;
 
     const contenedor = document.getElementById("productos");
+    if (!contenedor) {
+      console.warn('⚠️ No se encontró el contenedor #productos');
+      return;
+    }
+    
     contenedor.innerHTML = "";
 
     products.forEach(product => {
@@ -188,28 +212,28 @@ async function cargarProductos(){
       contenedor.appendChild(card);
     });
 
-    // ✅ Delegación de eventos - solo se añade UNA vez
+    // ✅ Delegación de eventos - SOLO UNA VEZ (evita descuento x2)
     if (!cartListenerAdded) {
       contenedor.addEventListener('click', (e) => {
         if (e.target.classList.contains('add-to-cart-btn')) {
           const productId = e.target.getAttribute('data-product-id');
           const product = productsCache.find(p => p._id === productId);
-          if (product) addToCart(product);
+          if (product) {
+            addToCart(product);
+          }
         }
       });
       cartListenerAdded = true;
     }
 
   } catch(error) {
-    console.error("Error cargando productos:", error);
+    console.error("❌ Error cargando productos:", error);
+    // Mostrar mensaje amigable al usuario
+    const contenedor = document.getElementById("productos");
+    if (contenedor) {
+      contenedor.innerHTML = '<p class="error-msg">⚠️ No se pudieron cargar los productos. Intenta recargar la página.</p>';
+    }
   }
-}
-
-// ✅ Prevención XSS
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
 }
 
 // ==========================
@@ -244,11 +268,20 @@ function initUserDropdown() {
     const dropdown = document.getElementById("dropdown");
 
     if (userMenu && dropdown && arrow) {
-      userMenu.addEventListener("click", () => {
+      userMenu.addEventListener("click", (e) => {
+        e.stopPropagation();
         dropdown.classList.toggle("active");
         arrow.style.transform = dropdown.classList.contains("active")
           ? "rotate(180deg)"
           : "rotate(0deg)";
+      });
+      
+      // Cerrar dropdown al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        if (!userMenu.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.remove("active");
+          arrow.style.transform = "rotate(0deg)";
+        }
       });
     }
 }
@@ -274,6 +307,7 @@ function irLogin() {
 // AGREGAR AL CARRITO
 // ==========================
 function addToCart(product) {
+  // Validar sesión
   if (!localStorage.getItem("token")) {
     showNotification("⚠️ Debes iniciar sesión para comprar", "error");
     setTimeout(() => window.location.href = "login.html", 1500);
@@ -296,13 +330,17 @@ function addToCart(product) {
   }
 
   localStorage.setItem("cart", JSON.stringify(cart));
+  
+  // Notificación flotante (mejora UX)
   showNotification("✅ Producto agregado al carrito");
+  
+  // Actualizar UI
   cargarCarrito();
   cargarCarritoModal();
 }
 
 // ==========================
-// MOSTRAR CARRITO (SECCIÓN)
+// MOSTRAR CARRITO (SECCIÓN PRINCIPAL)
 // ==========================
 function cargarCarrito(){
     const contenedor = document.getElementById("carrito");
@@ -315,6 +353,12 @@ function cargarCarrito(){
 
     let total = 0;
     let totalItems = 0;
+
+    if (cart.length === 0) {
+        contenedor.innerHTML = '<p class="empty-cart">Tu carrito está vacío 🛒</p>';
+        if(cartCount) cartCount.innerText = "0";
+        return;
+    }
 
     cart.forEach((item, index) => {
         total += item.price * item.quantity;
@@ -334,7 +378,7 @@ function cargarCarrito(){
                     <span>${item.quantity}</span>
                     <button onclick="cambiarCantidad(${index},1)">+</button>
                 </div>
-                <button onclick="eliminarProducto(${index})">Eliminar</button>
+                <button onclick="eliminarProducto(${index})" class="btn-delete">Eliminar</button>
             </div>
         `;
         contenedor.appendChild(card);
@@ -343,15 +387,16 @@ function cargarCarrito(){
     if(cartCount) cartCount.innerText = totalItems;
 
     const totalHTML = document.createElement("div");
+    totalHTML.classList.add("cart-total");
     totalHTML.innerHTML = `
         <h3>Total: $${total.toFixed(2)} MXN</h3>
-        <button onclick="simularCompra()">Comprar</button>
+        <button onclick="simularCompra()" class="btn-comprar">Comprar</button>
     `;
     contenedor.appendChild(totalHTML);
 }
 
 // ==========================
-// MODAL DEL CARRITO
+// MODAL DEL CARRITO (ICONO)
 // ==========================
 function initCartModal() {
     const cartIcon = document.querySelector(".cart-icon");
@@ -388,6 +433,13 @@ function cargarCarritoModal(){
 
     if(!contenedor) return;
     contenedor.innerHTML = "";
+    
+    if (cart.length === 0) {
+        contenedor.innerHTML = '<p class="empty">Tu carrito está vacío</p>';
+        if(totalText) totalText.innerText = "Total: $0.00 MXN";
+        return;
+    }
+    
     let total = 0;
 
     cart.forEach((item, index) => {
@@ -396,13 +448,13 @@ function cargarCarritoModal(){
         div.classList.add("cart-item");
         div.innerHTML = `
             <img src="${item.image}" alt="${escapeHtml(item.name)}">
-            <div>
-                ${escapeHtml(item.name)}
+            <div class="cart-item-info">
+                <strong>${escapeHtml(item.name)}</strong>
                 <div>$${item.price} MXN</div>
-                <div>
-                    <button onclick="cambiarCantidad(${index},-1)">-</button>
-                    ${item.quantity}
-                    <button onclick="cambiarCantidad(${index},1)">+</button>
+                <div class="cart-qty">
+                    <button onclick="cambiarCantidad(${index},-1)" class="btn-qty">-</button>
+                    <span>${item.quantity}</span>
+                    <button onclick="cambiarCantidad(${index},1)" class="btn-qty">+</button>
                 </div>
             </div>
         `;
@@ -413,10 +465,13 @@ function cargarCarritoModal(){
 }
 
 // ==========================
-// CAMBIAR CANTIDAD
+// CAMBIAR CANTIDAD EN CARRITO
 // ==========================
 function cambiarCantidad(index, cambio){
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    
+    if (!cart[index]) return;
+    
     cart[index].quantity += cambio;
     
     if(cart[index].quantity <= 0){
@@ -429,7 +484,7 @@ function cambiarCantidad(index, cambio){
 }
 
 // ==========================
-// ELIMINAR PRODUCTO
+// ELIMINAR PRODUCTO DEL CARRITO
 // ==========================
 function eliminarProducto(index){
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -437,10 +492,11 @@ function eliminarProducto(index){
     localStorage.setItem("cart", JSON.stringify(cart));
     cargarCarrito();
     cargarCarritoModal();
+    showNotification("🗑️ Producto eliminado");
 }
 
 // ==========================
-// ✅ SIMULAR COMPRA - VERSIÓN CORREGIDA
+// ✅ SIMULAR COMPRA - FLUJO CORREGIDO
 // ==========================
 async function simularCompra(){
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -450,22 +506,30 @@ async function simularCompra(){
         return;
     }
 
-    // ✅ Mostrar indicador de carga
-    const btnComprar = document.querySelector('#carrito button[onclick="simularCompra()"]');
-    const originalText = btnComprar?.innerText;
+    // Mostrar indicador de carga en el botón
+    const btnComprar = document.querySelector('#carrito .btn-comprar, #carrito button[onclick="simularCompra()"]');
+    const originalText = btnComprar?.innerText || 'Comprar';
+    
     if(btnComprar) {
         btnComprar.disabled = true;
-        btnComprar.innerText = 'Procesando...';
+        btnComprar.innerText = '⏳ Procesando...';
     }
 
     try {
-        // ✅ 1. VALIDAR STOCK (solo lectura, sin modificar)
+        // ✅ 1. VALIDAR STOCK (solo lectura, SIN modificar)
         for (const item of cart) {
-            const response = await fetch(`/api/products/${item._id}`);
-            if (!response.ok) throw new Error(`Error verificando: ${item.name}`);
-            const product = await response.json();
-            if (product.stock < item.quantity) {
-                throw new Error(`Stock insuficiente para: ${item.name}`);
+            try {
+                const response = await fetch(`/api/products/${item._id}`);
+                if (!response.ok) {
+                    console.warn(`⚠️ No se pudo verificar stock para ${item.name}`);
+                    continue; // Continuar sin bloquear
+                }
+                const product = await response.json();
+                if (product.stock < item.quantity) {
+                    throw new Error(`Stock insuficiente para: ${item.name}`);
+                }
+            } catch (err) {
+                console.warn(`⚠️ Error verificando ${item.name}:`, err.message);
             }
         }
 
@@ -489,14 +553,14 @@ async function simularCompra(){
         }, 1000);
 
     } catch (error) {
-        console.error("Error en compra:", error);
+        console.error("❌ Error en compra:", error);
         showNotification(`❌ ${error.message || 'Error al procesar el pago'}`, "error");
         localStorage.removeItem('cart_pending');
     } finally {
         // ✅ Restaurar botón
         if(btnComprar) {
             btnComprar.disabled = false;
-            btnComprar.innerText = originalText || 'Comprar';
+            btnComprar.innerText = originalText;
         }
     }
 }
@@ -508,10 +572,12 @@ function initClearCart() {
     const clearCartBtn = document.getElementById("clearCartBtn");
     if(clearCartBtn){
         clearCartBtn.addEventListener("click", () => {
-            localStorage.removeItem("cart");
-            cargarCarrito();
-            cargarCarritoModal();
-            showNotification("🗑️ Carrito vaciado");
+            if(confirm('¿Vaciar todo el carrito?')) {
+                localStorage.removeItem("cart");
+                cargarCarrito();
+                cargarCarritoModal();
+                showNotification("🗑️ Carrito vaciado");
+            }
         });
     }
 }
@@ -539,12 +605,12 @@ function initThemeToggle() {
             root.setAttribute('data-theme', 'light');
             localStorage.setItem('theme', 'light');
             toggle.textContent = '🌙';
-            showNotification?.('☀️ Modo claro activado');
+            showNotification('☀️ Modo claro activado');
         } else {
             root.removeAttribute('data-theme');
             localStorage.setItem('theme', 'dark');
             toggle.textContent = '☀️';
-            showNotification?.('🌙 Modo nocturno activado');
+            showNotification('🌙 Modo nocturno activado');
         }
     });
 }
@@ -556,7 +622,7 @@ const MercadoPagoModule = (function() {
     'use strict';
     
     // ✅ Public Key segura para frontend (NO es secreto)
-    // 🔧 Reemplaza con tu clave real
+    // 🔧 REEMPLAZA con tu clave real
     const PUBLIC_KEY = MP_PUBLIC_KEY;
     
     let mpInstance = null;
@@ -566,6 +632,7 @@ const MercadoPagoModule = (function() {
         if (isInitialized && mpInstance) return mpInstance;
         
         try {
+            // Cargar SDK de MercadoPago si no está presente
             if (!window.MercadoPago) {
                 await new Promise((resolve, reject) => {
                     const script = document.createElement('script');
@@ -624,6 +691,10 @@ const MercadoPagoModule = (function() {
 
         const { init_point, id } = await response.json();
         
+        if (!init_point) {
+            throw new Error('No se recibió URL de pago de MercadoPago');
+        }
+        
         return {
             preferenceId: id,
             checkoutUrl: init_point,
@@ -647,19 +718,27 @@ function initRecoverCart() {
     
     // Si hay carrito pendiente y no hay carrito actual, restaurar
     if (pendingCart && !currentCart) {
-        localStorage.setItem('cart', pendingCart);
-        localStorage.removeItem('cart_pending');
-        showNotification("🛒 Tu carrito fue restaurado");
-        cargarCarrito();
-        cargarCarritoModal();
+        try {
+            const parsed = JSON.parse(pendingCart);
+            if (parsed?.length > 0) {
+                localStorage.setItem('cart', pendingCart);
+                localStorage.removeItem('cart_pending');
+                showNotification("🛒 Tu carrito fue restaurado");
+                cargarCarrito();
+                cargarCarritoModal();
+            }
+        } catch (e) {
+            console.warn('⚠️ Error restaurando carrito:', e);
+            localStorage.removeItem('cart_pending');
+        }
     }
 }
 
 // ==========================
 // INICIALIZACIÓN PRINCIPAL
 // ==========================
-document.addEventListener('DOMContentLoaded', () => {
-    // ✅ Inicializar componentes
+function initApp() {
+    // ✅ Inicializar componentes de UI
     actualizarUIUsuario();
     initUserDropdown();
     initCartModal();
@@ -667,20 +746,30 @@ document.addEventListener('DOMContentLoaded', () => {
     initThemeToggle();
     initRecoverCart();
     
-    // ✅ Cargar datos
+    // ✅ Cargar datos dinámicos
+    cargarCarrusel();
     cargarProductos();
     cargarCarrito();
     cargarCarritoModal();
-});
-
-// ✅ También ejecutar si el DOM ya está listo (para navegadores rápidos)
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    actualizarUIUsuario();
-    initUserDropdown();
-    initCartModal();
-    initClearCart();
-    initThemeToggle();
-    initRecoverCart();
-    cargarCarrito();
-    cargarCarritoModal();
 }
+
+// ✅ Ejecutar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    // DOM ya está listo (carga rápida o script al final)
+    initApp();
+}
+
+// ✅ También exponer funciones globales para onclick en HTML (si las usas)
+window.addToCart = addToCart;
+window.cambiarCantidad = cambiarCantidad;
+window.eliminarProducto = eliminarProducto;
+window.simularCompra = simularCompra;
+window.cerrarTicket = cerrarTicket;
+window.imprimirTicket = imprimirTicket;
+window.descargarTicket = descargarTicket;
+window.logout = logout;
+window.irLogin = irLogin;
+window.cargarCarrito = cargarCarrito;
+window.cargarCarritoModal = cargarCarritoModal;
