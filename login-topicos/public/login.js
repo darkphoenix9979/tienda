@@ -176,6 +176,12 @@ async function verify2FACode(code){
 
 // 🔹 Función para mostrar el modal de verificación 2FA
 function show2FAVerification(method) {
+    // Verificar que no haya un modal abierto ya
+    const existingModal = document.getElementById('twoFAModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
     const modalHTML = `
         <div id="twoFAModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;">
             <div style="background:white;padding:30px;border-radius:12px;max-width:450px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
@@ -183,15 +189,19 @@ function show2FAVerification(method) {
                 <p style="color:#666;margin:15px 0;">
                     Hemos enviado un código de verificación a tu correo electrónico.
                 </p>
+                
+                <!-- ✅ IMPORTANTE: id="twoFACode" exacto -->
                 <input 
                     type="text" 
-                    id="twoFACode" 
+                    id="twoFACode"
                     placeholder="000000" 
                     maxlength="6" 
                     pattern="[0-9]{6}"
+                    autocomplete="one-time-code"
                     style="width:100%;padding:15px;font-size:24px;text-align:center;letter-spacing:10px;border:2px solid #ddd;border-radius:8px;margin:20px 0;box-sizing:border-box;"
                     oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                 >
+                
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <button 
                         onclick="submit2FA()" 
@@ -218,12 +228,17 @@ function show2FAVerification(method) {
         </div>
     `;
     
-    // Agregar el modal al body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
-    // Enfocar el input automáticamente
+    // 🔧 Enfocar el input después de un pequeño delay para asegurar que esté en el DOM
     setTimeout(() => {
-        document.getElementById('twoFACode').focus();
+        const input = document.getElementById('twoFACode');
+        if (input) {
+            input.focus();
+            console.log("✅ Input #twoFACode enfocado");
+        } else {
+            console.error("❌ No se pudo enfocar #twoFACode - elemento no encontrado");
+        }
     }, 100);
 }
 
@@ -242,21 +257,28 @@ function close2FAModal() {
 async function submit2FA() {
     console.log("🔍 [DEBUG] submit2FA() ejecutado");
     
+    // 🔧 Verificar que el input existe antes de usarlo
     const codeInput = document.getElementById('twoFACode');
-    const errorElement = document.getElementById('twoFAError');
-    const messageElement = document.getElementById('twoFAMessage');
     
-    const code = codeInput?.value?.trim();
+    if (!codeInput) {
+        console.error("❌ ERROR: No se encontró el input #twoFACode");
+        alert("Error: El formulario de verificación no se cargó correctamente. Intenta de nuevo.");
+        close2FAModal();
+        return;
+    }
+    
+    const code = codeInput.value.trim();
     console.log("🔑 Código ingresado:", code ? `${code[0]}***${code.slice(-1)}` : "VACÍO");
+    console.log("🔍 Input encontrado:", codeInput, "Value:", codeInput.value);
     
     // Validar formato del código
     if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
         console.warn("⚠️ Código inválido:", code);
-        showError(errorElement, 'Ingresa un código válido de 6 dígitos');
+        showError(document.getElementById('twoFAError'), 'Ingresa un código válido de 6 dígitos');
+        codeInput.focus(); // Enfocar para que el usuario pueda escribir
         return;
     }
     
-    // Obtener datos de sessionStorage
     const tempToken = sessionStorage.getItem('tempToken');
     const email = sessionStorage.getItem('pendingEmail');
     
@@ -266,20 +288,17 @@ async function submit2FA() {
     });
     
     if (!tempToken || !email) {
-        showError(errorElement, 'Sesión expirada. Regístrate nuevamente.');
-        setTimeout(() => {
-            close2FAModal();
-            switchForm();
-        }, 2000);
+        showError(document.getElementById('twoFAError'), 'Sesión expirada. Regístrate nuevamente.');
+        setTimeout(() => { close2FAModal(); switchForm(); }, 2000);
         return;
     }
     
     try {
         console.log("🌐 Enviando verify a /api/auth/verify-2fa...");
         
-        // Mostrar estado de carga
         codeInput.disabled = true;
-        showError(errorElement, '', false);
+        showError(document.getElementById('twoFAError'), '', false);
+        const messageElement = document.getElementById('twoFAMessage');
         messageElement.textContent = "Verificando...";
         messageElement.style.display = 'block';
         
@@ -289,52 +308,48 @@ async function submit2FA() {
             body: JSON.stringify({ tempToken, email, code })
         });
         
-        console.log("📡 Respuesta del servidor:", res.status, res.statusText);
+        console.log("📡 Respuesta:", res.status, res.statusText);
         
-        // Verificar tipo de contenido
         const contentType = res.headers.get('content-type');
         let data;
         
         if (contentType && contentType.includes('application/json')) {
             data = await res.json();
-            console.log("📄 JSON response:", data);
+            console.log("📄 JSON:", data);
         } else {
             const text = await res.text();
-            console.error("❌ Respuesta no es JSON:", text.substring(0, 200));
-            throw new Error(`Servidor respondió ${res.status}: ${text.substring(0, 100)}`);
+            throw new Error(`Respuesta no JSON: ${text.substring(0, 100)}`);
         }
         
         if (res.ok) {
             console.log("✅ Verificación exitosa");
             showMessage(messageElement, '¡Cuenta verificada! Redirigiendo... 🎉');
             
-            // Guardar sesión
             localStorage.setItem('token', data.token || 'autenticado');
             localStorage.setItem('username', data.username);
             localStorage.setItem('role', data.role);
             
-            // Limpiar datos temporales
             sessionStorage.removeItem('tempToken');
             sessionStorage.removeItem('pendingEmail');
             
-            // Redirigir después de 1.5 segundos
             setTimeout(() => {
                 const redirectUrl = data.role === 'admin' ? 'admin.html' : 'tienda.html';
                 console.log("🔄 Redirigiendo a:", redirectUrl);
                 window.location.href = redirectUrl;
             }, 1500);
         } else {
-            console.warn("⚠️ Error del backend:", data.message);
-            showError(errorElement, data.message || 'Código incorrecto');
+            console.warn("⚠️ Error backend:", data.message);
+            showError(document.getElementById('twoFAError'), data.message || 'Código incorrecto');
             codeInput.value = '';
+            codeInput.disabled = false;
             codeInput.focus();
             messageElement.style.display = 'none';
         }
     } catch (error) {
         console.error("💥 ERROR en submit2FA():", error);
-        showError(errorElement, `Error: ${error.message}`);
+        showError(document.getElementById('twoFAError'), `Error: ${error.message}`);
         codeInput.disabled = false;
-        messageElement.style.display = 'none';
+        document.getElementById('twoFAMessage').style.display = 'none';
     }
 }
 
