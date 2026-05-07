@@ -67,31 +67,88 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
 // REGISTER
 async function register(){
-
     const username = document.getElementById("registerUsername").value;
     const email = document.getElementById("registerEmail").value;
     const password = document.getElementById("registerPassword").value;
 
-    const response = await fetch("/api/auth/register",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({username,email,password})
-    });
+    try {
+        const response = await fetch("/api/auth/register",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({username, email, password})
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if(response.ok){
+        if(response.ok){
+            // Caso 1: Registro exitoso sin 2FA (si está desactivado)
+            if(!data.requires2FA){
+                alert("Registro exitoso 🌸");
+                switchForm();
+                return;
+            }
+            
+            // Caso 2: Requiere verificación 2FA
+            if(data.requires2FA && data.tempToken){
+                // Guardar token temporal para el siguiente paso
+                sessionStorage.setItem("tempToken", data.tempToken);
+                sessionStorage.setItem("pendingEmail", email);
+                
+                // Mostrar modal/formulario de verificación
+                show2FAVerification(data.method); // 'email', 'sms' o 'totp'
+            }
+        } else {
+            alert(data.message);
+        }
+    } catch(error){
+        console.error("Error:", error);
+        alert("Error de conexión. Intenta nuevamente.");
+    }
+}
 
-        alert("Registro exitoso 🌸");
-
+// Función para mostrar el formulario de verificación 2FA
+async function verify2FACode(code){
+    const tempToken = sessionStorage.getItem("tempToken");
+    const email = sessionStorage.getItem("pendingEmail");
+    
+    if(!tempToken){
+        alert("Sesión expirada. Regístrate nuevamente.");
         switchForm();
-
-    }else{
-
-        alert(data.message);
-
+        return;
     }
 
+    try {
+        const res = await fetch("/api/auth/verify-2fa", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                tempToken,
+                email,
+                code: code.trim()
+            })
+        });
+
+        const data = await res.json();
+
+        if(res.ok){
+            // ✅ Verificación exitosa: activar sesión
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("username", data.username);
+            localStorage.setItem("role", data.role);
+            
+            // Limpiar datos temporales
+            sessionStorage.removeItem("tempToken");
+            sessionStorage.removeItem("pendingEmail");
+            
+            alert("¡Cuenta verificada! 🎉");
+            window.location.href = data.role === "admin" ? "admin.html" : "tienda.html";
+        } else {
+            alert(data.message || "Código inválido");
+        }
+    } catch(error){
+        console.error("Error en verificación:", error);
+        alert("Error al verificar el código");
+    }
 }
 
 

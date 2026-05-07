@@ -57,6 +57,23 @@
         <div class="switch" onclick="switchForm()">¿Ya tienes cuenta? Inicia sesión</div>
     </div>
 
+    <!-- Modal de verificación 2FA -->
+<div id="twoFAModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>🔐 Verificación de Seguridad</h3>
+        <p id="twoFAMessage">Hemos enviado un código a tu correo electrónico.</p>
+        
+        <input type="text" id="twoFACode" placeholder="Ingresa el código de 6 dígitos" 
+               maxlength="6" pattern="[0-9]{6}" required>
+        
+        <div class="actions">
+            <button type="button" onclick="resendCode()">Reenviar código</button>
+            <button type="button" onclick="submit2FA()">Verificar</button>
+        </div>
+        <p id="twoFAError" class="error"></p>
+    </div>
+</div>
+
 </div>
 
 <script src="login.js"></script>
