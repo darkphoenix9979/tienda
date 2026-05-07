@@ -8,67 +8,56 @@ const crypto = require("crypto"); // ← NUEVO
 const { sendVerificationEmail } = require("../config/email");
 
 // 🔹 REGISTRO (con 2FA)
+// routes/auth.js
+
+// ... imports ...
+
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
+    // 1. Validaciones básicas
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Todos los campos son obligatorios" });
+      return res.status(400).json({ message: "Datos incompletos" });
     }
 
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
-
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       return res.status(400).json({ message: "Usuario o email ya existe" });
     }
 
-    // 🔐 Hash de contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 🔢 Generar código 2FA de 6 dígitos
     const twoFACode = crypto.randomInt(100000, 999999).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // 🎫 Token temporal para el flujo de verificación
     const tempToken = jwt.sign(
       { email, step: "pending_2fa" },
-      process.env.JWT_TEMP_SECRET || "temp_secret_change_this",
+      process.env.JWT_TEMP_SECRET,
       { expiresIn: "10m" }
     );
 
-    // 💾 Guardar en colección "pendiente"
     await PendingUser.create({
-      username,
-      email,
-      password: hashedPassword,
-      twoFACode,
-      expiresAt,
-      tempToken
+      username, email, password: hashedPassword, twoFACode, expiresAt, tempToken
     });
-    try {
-  await sendVerificationEmail(email, twoFACode);
-  console.log(`✅ Email de verificación enviado a ${email}`);
-} catch (emailError) {
-  console.error("❌ Error al enviar email:", emailError);
-  // No fallar el registro si el email falla (opcional)
-  // return res.status(500).json({ message: "Error al enviar email de verificación" });
-}
 
-    // 📧 Aquí iría el envío del email (te dejo el ejemplo más abajo)
-    console.log(`🔐 Código 2FA para ${email}: ${twoFACode}`); // ← Solo para desarrollo
+    // 🔥 CAMBIO CLAVE: NO USAR 'await' AQUÍ.
+    // Esto hace que el servidor responda "201" INMEDIATAMENTE al frontend.
+    // El correo se intentará enviar en segundo plano.
+    
+    sendVerificationEmail(email, twoFACode)
+      .then(() => console.log(`✅ [BACKGROUND] Email enviado a ${email}`))
+      .catch(err => console.error(`❌ [BACKGROUND] Falló el envío a ${email}:`, err.message));
 
-    // ✅ Responder al frontend
-    res.status(201).json({
-      message: "Registro exitoso. Verifica tu cuenta.",
+    // ✅ Responde al usuario INMEDIATAMENTE (sin esperar al correo)
+    return res.status(201).json({
+      message: "Registro exitoso. Revisa tu correo.",
       requires2FA: true,
       tempToken,
       method: "email"
     });
 
   } catch (error) {
-    console.error("Error en registro:", error);
+    console.error("Error crítico:", error);
     res.status(500).json({ message: "Error del servidor" });
   }
 });
