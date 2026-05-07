@@ -75,34 +75,32 @@ async function register(){
         const response = await fetch("/api/auth/register",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({username, email, password})
+            body: JSON.stringify({username,email,password})
         });
 
         const data = await response.json();
 
         if(response.ok){
-            // Caso 1: Registro exitoso sin 2FA (si está desactivado)
-            if(!data.requires2FA){
-                alert("Registro exitoso 🌸");
-                switchForm();
-                return;
-            }
-            
-            // Caso 2: Requiere verificación 2FA
-            if(data.requires2FA && data.tempToken){
-                // Guardar token temporal para el siguiente paso
+            // Si requiere 2FA
+            if(data.requires2FA){
+                // Guardar token temporal
                 sessionStorage.setItem("tempToken", data.tempToken);
                 sessionStorage.setItem("pendingEmail", email);
                 
-                // Mostrar modal/formulario de verificación
-                show2FAVerification(data.method); // 'email', 'sms' o 'totp'
+                // Mostrar modal de verificación
+                show2FAVerification(data.method); // ← Esta es la función que faltaba
+                return;
             }
+            
+            // Registro tradicional (sin 2FA)
+            alert("Registro exitoso 🌸");
+            switchForm();
         } else {
             alert(data.message);
         }
     } catch(error){
-        console.error("Error:", error);
-        alert("Error de conexión. Intenta nuevamente.");
+        console.error("Error:",error);
+        alert("Error de conexión");
     }
 }
 
@@ -150,6 +148,198 @@ async function verify2FACode(code){
         alert("Error al verificar el código");
     }
 }
+
+// 🔹 Función para mostrar el modal de verificación 2FA
+function show2FAVerification(method) {
+    const modalHTML = `
+        <div id="twoFAModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;">
+            <div style="background:white;padding:30px;border-radius:12px;max-width:450px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+                <h2 style="margin-top:0;color:#333;">🔐 Verificación de Seguridad</h2>
+                <p style="color:#666;margin:15px 0;">
+                    Hemos enviado un código de verificación a tu correo electrónico.
+                </p>
+                <input 
+                    type="text" 
+                    id="twoFACode" 
+                    placeholder="000000" 
+                    maxlength="6" 
+                    pattern="[0-9]{6}"
+                    style="width:100%;padding:15px;font-size:24px;text-align:center;letter-spacing:10px;border:2px solid #ddd;border-radius:8px;margin:20px 0;box-sizing:border-box;"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                >
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button 
+                        onclick="submit2FA()" 
+                        style="flex:1;background:#ff00cc;color:white;padding:12px 20px;border:none;border-radius:6px;cursor:pointer;font-size:16px;font-weight:bold;"
+                    >
+                        Verificar
+                    </button>
+                    <button 
+                        onclick="resendCode()" 
+                        style="background:#6c757d;color:white;padding:12px 20px;border:none;border-radius:6px;cursor:pointer;font-size:14px;"
+                    >
+                        Reenviar código
+                    </button>
+                    <button 
+                        onclick="close2FAModal()" 
+                        style="background:#dc3545;color:white;padding:12px 20px;border:none;border-radius:6px;cursor:pointer;font-size:14px;"
+                    >
+                        Cancelar
+                    </button>
+                </div>
+                <p id="twoFAError" style="color:#dc3545;margin-top:15px;text-align:center;display:none;"></p>
+                <p id="twoFAMessage" style="color:#28a745;margin-top:10px;text-align:center;display:none;"></p>
+            </div>
+        </div>
+    `;
+    
+    // Agregar el modal al body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Enfocar el input automáticamente
+    setTimeout(() => {
+        document.getElementById('twoFACode').focus();
+    }, 100);
+}
+
+// 🔹 Función para cerrar el modal
+function close2FAModal() {
+    const modal = document.getElementById('twoFAModal');
+    if (modal) {
+        modal.remove();
+        // Limpiar datos temporales
+        sessionStorage.removeItem('tempToken');
+        sessionStorage.removeItem('pendingEmail');
+    }
+}
+
+// 🔹 Función para verificar el código
+async function submit2FA() {
+    const codeInput = document.getElementById('twoFACode');
+    const errorElement = document.getElementById('twoFAError');
+    const messageElement = document.getElementById('twoFAMessage');
+    
+    const code = codeInput.value.trim();
+    
+    if (code.length !== 6) {
+        showError(errorElement, 'Ingresa un código de 6 dígitos');
+        return;
+    }
+    
+    const tempToken = sessionStorage.getItem('tempToken');
+    const email = sessionStorage.getItem('pendingEmail');
+    
+    if (!tempToken || !email) {
+        showError(errorElement, 'Sesión expirada. Regístrate nuevamente.');
+        setTimeout(() => {
+            close2FAModal();
+            switchForm();
+        }, 2000);
+        return;
+    }
+    
+    try {
+        // Mostrar estado de carga
+        codeInput.disabled = true;
+        showError(errorElement, '', false);
+        
+        const res = await fetch('/api/auth/verify-2fa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tempToken, email, code })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            // Éxito
+            showMessage(messageElement, '¡Cuenta verificada! Redirigiendo... 🎉');
+            
+            // Guardar sesión
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('role', data.role);
+            
+            // Limpiar datos temporales
+            sessionStorage.removeItem('tempToken');
+            sessionStorage.removeItem('pendingEmail');
+            
+            // Redirigir después de 1.5 segundos
+            setTimeout(() => {
+                window.location.href = data.role === 'admin' ? 'admin.html' : 'tienda.html';
+            }, 1500);
+        } else {
+            // Error
+            showError(errorElement, data.message || 'Código incorrecto');
+            codeInput.value = '';
+            codeInput.focus();
+        }
+    } catch (error) {
+        console.error('Error en verificación:', error);
+        showError(errorElement, 'Error de conexión. Intenta nuevamente.');
+        codeInput.disabled = false;
+    }
+}
+
+// 🔹 Función para reenviar código
+async function resendCode() {
+    const email = sessionStorage.getItem('pendingEmail');
+    const messageElement = document.getElementById('twoFAMessage');
+    const errorElement = document.getElementById('twoFAError');
+    
+    if (!email) {
+        showError(errorElement, 'No se pudo reenviar. Intenta registrarte de nuevo.');
+        return;
+    }
+    
+    try {
+        const res = await fetch('/api/auth/resend-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            showMessage(messageElement, '✅ Nuevo código enviado a tu correo');
+            showError(errorElement, '', false);
+        } else {
+            showError(errorElement, data.message || 'No se pudo reenviar el código');
+        }
+    } catch (error) {
+        console.error('Error al reenviar:', error);
+        showError(errorElement, 'Error de conexión');
+    }
+}
+
+// 🔹 Helper: Mostrar error
+function showError(element, message, show = true) {
+    if (element) {
+        element.textContent = message;
+        element.style.display = show ? 'block' : 'none';
+    }
+}
+
+// 🔹 Helper: Mostrar mensaje exitoso
+function showMessage(element, message) {
+    if (element) {
+        element.textContent = message;
+        element.style.display = 'block';
+    }
+}
+
+// 🔹 Permitir verificar con tecla Enter
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const modal = document.getElementById('twoFAModal');
+            if (modal) {
+                submit2FA();
+            }
+        }
+    });
+});
 
 
 // PARTICULAS
