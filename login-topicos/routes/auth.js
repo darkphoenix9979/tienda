@@ -5,6 +5,7 @@ const PendingUser = require("../models/PendingUser"); // ← NUEVO
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken"); // ← NUEVO
 const crypto = require("crypto"); // ← NUEVO
+const { sendVerificationEmail } = require("../config/email");
 
 // 🔹 REGISTRO (con 2FA)
 router.post("/register", async (req, res) => {
@@ -46,6 +47,14 @@ router.post("/register", async (req, res) => {
       expiresAt,
       tempToken
     });
+    try {
+  await sendVerificationEmail(email, twoFACode);
+  console.log(`✅ Email de verificación enviado a ${email}`);
+} catch (emailError) {
+  console.error("❌ Error al enviar email:", emailError);
+  // No fallar el registro si el email falla (opcional)
+  // return res.status(500).json({ message: "Error al enviar email de verificación" });
+}
 
     // 📧 Aquí iría el envío del email (te dejo el ejemplo más abajo)
     console.log(`🔐 Código 2FA para ${email}: ${twoFACode}`); // ← Solo para desarrollo
