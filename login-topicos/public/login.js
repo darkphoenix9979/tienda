@@ -238,21 +238,32 @@ function close2FAModal() {
     }
 }
 
-// 🔹 Función para verificar el código
+// 🔹 Función para verificar el código (versión con debug)
 async function submit2FA() {
+    console.log("🔍 [DEBUG] submit2FA() ejecutado");
+    
     const codeInput = document.getElementById('twoFACode');
     const errorElement = document.getElementById('twoFAError');
     const messageElement = document.getElementById('twoFAMessage');
     
-    const code = codeInput.value.trim();
+    const code = codeInput?.value?.trim();
+    console.log("🔑 Código ingresado:", code ? `${code[0]}***${code.slice(-1)}` : "VACÍO");
     
-    if (code.length !== 6) {
-        showError(errorElement, 'Ingresa un código de 6 dígitos');
+    // Validar formato del código
+    if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+        console.warn("⚠️ Código inválido:", code);
+        showError(errorElement, 'Ingresa un código válido de 6 dígitos');
         return;
     }
     
+    // Obtener datos de sessionStorage
     const tempToken = sessionStorage.getItem('tempToken');
     const email = sessionStorage.getItem('pendingEmail');
+    
+    console.log("📦 Datos de sesión:", {
+        tempToken: tempToken ? `${tempToken.slice(0, 10)}...` : "NO EXISTE",
+        email: email || "NO EXISTE"
+    });
     
     if (!tempToken || !email) {
         showError(errorElement, 'Sesión expirada. Regístrate nuevamente.');
@@ -264,9 +275,13 @@ async function submit2FA() {
     }
     
     try {
+        console.log("🌐 Enviando verify a /api/auth/verify-2fa...");
+        
         // Mostrar estado de carga
         codeInput.disabled = true;
         showError(errorElement, '', false);
+        messageElement.textContent = "Verificando...";
+        messageElement.style.display = 'block';
         
         const res = await fetch('/api/auth/verify-2fa', {
             method: 'POST',
@@ -274,14 +289,27 @@ async function submit2FA() {
             body: JSON.stringify({ tempToken, email, code })
         });
         
-        const data = await res.json();
+        console.log("📡 Respuesta del servidor:", res.status, res.statusText);
+        
+        // Verificar tipo de contenido
+        const contentType = res.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await res.json();
+            console.log("📄 JSON response:", data);
+        } else {
+            const text = await res.text();
+            console.error("❌ Respuesta no es JSON:", text.substring(0, 200));
+            throw new Error(`Servidor respondió ${res.status}: ${text.substring(0, 100)}`);
+        }
         
         if (res.ok) {
-            // Éxito
+            console.log("✅ Verificación exitosa");
             showMessage(messageElement, '¡Cuenta verificada! Redirigiendo... 🎉');
             
             // Guardar sesión
-            localStorage.setItem('token', data.token);
+            localStorage.setItem('token', data.token || 'autenticado');
             localStorage.setItem('username', data.username);
             localStorage.setItem('role', data.role);
             
@@ -291,18 +319,22 @@ async function submit2FA() {
             
             // Redirigir después de 1.5 segundos
             setTimeout(() => {
-                window.location.href = data.role === 'admin' ? 'admin.html' : 'tienda.html';
+                const redirectUrl = data.role === 'admin' ? 'admin.html' : 'tienda.html';
+                console.log("🔄 Redirigiendo a:", redirectUrl);
+                window.location.href = redirectUrl;
             }, 1500);
         } else {
-            // Error
+            console.warn("⚠️ Error del backend:", data.message);
             showError(errorElement, data.message || 'Código incorrecto');
             codeInput.value = '';
             codeInput.focus();
+            messageElement.style.display = 'none';
         }
     } catch (error) {
-        console.error('Error en verificación:', error);
-        showError(errorElement, 'Error de conexión. Intenta nuevamente.');
+        console.error("💥 ERROR en submit2FA():", error);
+        showError(errorElement, `Error: ${error.message}`);
         codeInput.disabled = false;
+        messageElement.style.display = 'none';
     }
 }
 
