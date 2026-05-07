@@ -62,12 +62,19 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 🔹 NUEVO: Verificación del código 2FA
+// 🔹 Verificación del código 2FA - POST /api/auth/verify-2fa
 router.post("/verify-2fa", async (req, res) => {
+  console.log("🔍 [BACKEND] Recibido verify-2fa:", { 
+    email: req.body.email, 
+    code: req.body.code ? "***" : "vacío",
+    hasTempToken: !!req.body.tempToken 
+  });
+  
   try {
     const { tempToken, email, code } = req.body;
 
     if (!tempToken || !email || !code) {
+      console.warn("⚠️ Datos incompletos:", { tempToken, email, code });
       return res.status(400).json({ message: "Datos incompletos" });
     }
 
@@ -75,7 +82,9 @@ router.post("/verify-2fa", async (req, res) => {
     let decoded;
     try {
       decoded = jwt.verify(tempToken, process.env.JWT_TEMP_SECRET || "temp_secret_change_this");
-    } catch {
+      console.log("✅ Token temporal válido:", decoded);
+    } catch (jwtError) {
+      console.error("❌ Token inválido:", jwtError.message);
       return res.status(401).json({ message: "Token inválido o expirado" });
     }
 
@@ -86,8 +95,15 @@ router.post("/verify-2fa", async (req, res) => {
       expiresAt: { $gt: new Date() } // No expirado
     });
 
-    if (!pending || pending.twoFACode !== code) {
-      return res.status(400).json({ message: "Código incorrecto o expirado" });
+    console.log("🔍 Pending user encontrado:", !!pending);
+    
+    if (!pending) {
+      return res.status(400).json({ message: "Registro no encontrado o expirado" });
+    }
+    
+    if (pending.twoFACode !== code) {
+      console.warn("⚠️ Código incorrecto. Esperado:", pending.twoFACode, "Recibido:", code);
+      return res.status(400).json({ message: "Código incorrecto" });
     }
 
     // ✅ Crear usuario definitivo
@@ -95,22 +111,26 @@ router.post("/verify-2fa", async (req, res) => {
       username: pending.username,
       email: pending.email,
       password: pending.password,
-      role: "customer", // o el rol por defecto que uses
+      role: "customer",
       twoFAEnabled: true
     });
 
     await newUser.save();
+    console.log("✅ Usuario creado:", newUser.email);
 
     // 🗑️ Eliminar registro pendiente
     await PendingUser.deleteOne({ _id: pending._id });
+    console.log("🗑️ PendingUser eliminado");
 
-    // 🎫 Generar token de sesión final (opcional, si usas JWT para sesiones)
+    // 🎫 Generar token de sesión final
     const token = jwt.sign(
       { userId: newUser._id, role: newUser.role },
       process.env.JWT_SECRET || "secret_change_this",
       { expiresIn: "24h" }
     );
 
+    console.log("✅ Verificación completada para:", email);
+    
     res.status(200).json({
       message: "Cuenta verificada exitosamente 🌸",
       token,
@@ -119,7 +139,7 @@ router.post("/verify-2fa", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error en verificación 2FA:", error);
+    console.error("💥 Error crítico en verify-2fa:", error);
     res.status(500).json({ message: "Error del servidor" });
   }
 });
