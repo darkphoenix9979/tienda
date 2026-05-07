@@ -67,40 +67,65 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
 // REGISTER
 async function register(){
-    const username = document.getElementById("registerUsername").value;
-    const email = document.getElementById("registerEmail").value;
-    const password = document.getElementById("registerPassword").value;
+    console.log("🔍 [DEBUG] register() ejecutado");
+    
+    const username = document.getElementById("registerUsername")?.value?.trim();
+    const email = document.getElementById("registerEmail")?.value?.trim();
+    const password = document.getElementById("registerPassword")?.value;
+
+    console.log("📦 Datos a enviar:", { username, email, password: "***" });
+
+    // Validación básica frontend
+    if (!username || !email || !password) {
+        console.warn("⚠️ Campos vacíos");
+        alert("Todos los campos son obligatorios");
+        return;
+    }
 
     try {
+        console.log("🌐 Enviando request a /api/auth/register...");
+        
         const response = await fetch("/api/auth/register",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({username,email,password})
+            body: JSON.stringify({username, email, password})
         });
 
-        const data = await response.json();
+        console.log("📡 Respuesta recibida:", response.status, response.statusText);
+
+        // 🔍 Verificar tipo de contenido antes de parsear
+        const contentType = response.headers.get("content-type");
+        let data;
+        
+        if (contentType && contentType.includes("application/json")) {
+            data = await response.json();
+            console.log("📄 JSON parsed:", data);
+        } else {
+            const text = await response.text();
+            console.error("❌ Respuesta no es JSON:", text.substring(0, 200));
+            throw new Error(`Servidor respondió con ${response.status}: ${text.substring(0, 100)}`);
+        }
 
         if(response.ok){
-            // Si requiere 2FA
+            console.log("✅ Registro exitoso (backend)");
+            
             if(data.requires2FA){
-                // Guardar token temporal
+                console.log("🔐 Requiere 2FA, mostrando modal...");
                 sessionStorage.setItem("tempToken", data.tempToken);
                 sessionStorage.setItem("pendingEmail", email);
-                
-                // Mostrar modal de verificación
-                show2FAVerification(data.method); // ← Esta es la función que faltaba
+                show2FAVerification(data.method);
                 return;
             }
             
-            // Registro tradicional (sin 2FA)
             alert("Registro exitoso 🌸");
             switchForm();
         } else {
-            alert(data.message);
+            console.warn("⚠️ Error del backend:", data.message);
+            alert(data.message || "Error en el registro");
         }
     } catch(error){
-        console.error("Error:",error);
-        alert("Error de conexión");
+        console.error("💥 ERROR en register():", error);
+        alert(`Error: ${error.message}. Revisa la consola (F12) para más detalles.`);
     }
 }
 
