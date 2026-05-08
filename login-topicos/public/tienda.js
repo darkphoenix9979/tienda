@@ -660,6 +660,7 @@ function cambiarCantidad(index, cambio){
     localStorage.setItem("cart", JSON.stringify(cart));
     cargarCarrito();
     cargarCarritoModal();
+    actualizarContadorCarrito(); // <--- AGREGA ESTA LÍNEA AQUÍ
 }
 
 // ==========================
@@ -674,6 +675,7 @@ function eliminarProducto(index){
     cargarCarrito();
     cargarCarritoModal();
     showNotification("🗑️ Producto eliminado");
+    actualizarContadorCarrito(); // <--- AGREGA ESTA LÍNEA AQUÍ
 }
 
 // ==========================
