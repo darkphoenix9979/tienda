@@ -515,6 +515,7 @@ function addToCart(product) {
   // Actualizar UI
   cargarCarrito();
   cargarCarritoModal();
+  actualizarContadorCarrito(); // ← Agrega solo esta línea
 }
 
 // ==========================
@@ -958,6 +959,13 @@ function initApp() {
   }
 }
 
+function actualizarContadorCarrito() {
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const badge = document.getElementById("cartCount");
+  if (badge) badge.textContent = totalItems;
+}
+
 // ✅ Ejecutar cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
@@ -965,6 +973,8 @@ if (document.readyState === 'loading') {
     // DOM ya está listo (carga rápida o script al final)
     initApp();
 }
+
+actualizarContadorCarrito();
 
 // ✅ También exponer funciones globales para onclick en HTML (si las usas)
 window.addToCart = addToCart;
