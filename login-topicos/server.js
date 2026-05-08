@@ -3,7 +3,6 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 const path = require("path");
 const cors = require("cors");
-const verifyToken = require("./middleware/verifyToken"); // ← Tu middleware existente
 require("dotenv").config();
 
 const app = express();
@@ -44,16 +43,32 @@ app.use("/api/carousel", carouselRoutes);
 app.use("/api/payment", paymentRoutes);
 
 /* ==========================
-   MIDDLEWARE: VERIFICAR ADMIN
+   MIDDLEWARE: VERIFY TOKEN (Inline - sin archivos externos)
 ========================== */
+const jwt = require("jsonwebtoken");
 
-// 🔐 Verifica que req.user.role sea 'admin'
-// (req.user ya fue seteado por verifyToken.js)
-const verificarAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ message: "Acceso denegado: se requiere rol admin" });
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: "No autorizado" });
+
+  const token = authHeader.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Token faltante" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secreto123");
+    
+    // ✅ Incluir role + soportar userId o id
+    req.user = { 
+      id: decoded.userId || decoded.id,
+      username: decoded.username,
+      role: decoded.role  // ← Crítico para verificarAdmin
+    };
+    
+    next();
+  } catch (err) {
+    console.error("Error token:", err.message);
+    return res.status(401).json({ message: "Token inválido o expirado" });
   }
-  next();
 };
 
 /* ==========================
