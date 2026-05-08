@@ -9,6 +9,109 @@
 let productsCache = [];
 let cartListenerAdded = false;
 
+// ==========================
+// 🔊 LECTURA POR VOZ (Web Speech API)
+// ==========================
+let voiceEnabled = localStorage.getItem('voiceEnabled') === 'true';
+let speechQueue = [];
+let isSpeaking = false;
+
+/**
+ * Lee texto en voz alta (accesibilidad)
+ * @param {string} text - Texto a leer
+ * @param {boolean} immediate - Si true, interrumpe cola actual
+ */
+function speakText(text, immediate = false) {
+  // Si el usuario desactivó la voz, no hacer nada
+  if (!voiceEnabled) return;
+  
+  // Verificar soporte del navegador
+  if (!('speechSynthesis' in window)) {
+    console.warn("⚠️ Navegador no soporta lectura por voz");
+    return;
+  }
+  
+  // Si es inmediato, cancelar todo lo anterior
+  if (immediate) {
+    window.speechSynthesis.cancel();
+    speechQueue = [];
+    isSpeaking = false;
+  }
+  
+  // Agregar a cola para evitar superposición
+  speechQueue.push(text);
+  processSpeechQueue();
+}
+
+/**
+ * Procesa la cola de mensajes para leer uno por uno
+ */
+function processSpeechQueue() {
+  if (isSpeaking || speechQueue.length === 0) return;
+  
+  isSpeaking = true;
+  const text = speechQueue.shift();
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-MX'; // Español México (cambia a 'es-ES' si prefieres)
+  utterance.rate = 0.95; // Velocidad ligeramente más lenta para claridad
+  utterance.pitch = 1;
+  
+  // Intentar usar voz en español si está disponible
+  const voices = window.speechSynthesis.getVoices();
+  const spanishVoice = voices.find(v => 
+    v.lang.includes('es') && (v.name.includes('Google') || v.name.includes('Spanish'))
+  );
+  if (spanishVoice) utterance.voice = spanishVoice;
+  
+  utterance.onend = () => {
+    isSpeaking = false;
+    // Procesar siguiente mensaje en cola después de pequeña pausa
+    setTimeout(processSpeechQueue, 300);
+  };
+  
+  utterance.onerror = (e) => {
+    console.warn("❌ Error en speech:", e.error);
+    isSpeaking = false;
+    processSpeechQueue(); // Intentar con el siguiente
+  };
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+/**
+ * Alternar estado de voz (para botón de accesibilidad)
+ */
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  localStorage.setItem('voiceEnabled', voiceEnabled);
+  
+  if (voiceEnabled) {
+    showNotification("🔊 Lectura por voz activada", "success");
+    speakText("Lectura por voz activada. Escucharás confirmaciones de tus acciones.", true);
+  } else {
+    window.speechSynthesis.cancel();
+    speechQueue = [];
+    isSpeaking = false;
+    showNotification("🔇 Lectura por voz desactivada", "info");
+  }
+  
+  // Actualizar botón si existe
+  const voiceBtn = document.getElementById('voiceToggleBtn');
+  if (voiceBtn) {
+    voiceBtn.textContent = voiceEnabled ? '🔊' : '🔇';
+    voiceBtn.setAttribute('aria-pressed', voiceEnabled);
+  }
+}
+
+/**
+ * Leer código dígito por dígito (útil para precios o códigos)
+ */
+function speakCode(code, prefix = "Código") {
+  const digits = code.toString().split('').join(', ');
+  speakText(`${prefix}: ${digits}`);
+}
+
 // ✅ CONFIGURACIÓN MERCADOPAGO - Public Key (segura en frontend)
 // 🔧 REEMPLAZA con tu Public Key real de https://www.mercadopago.com/developers
 const MP_PUBLIC_KEY = 'APP_USR-8876003953346216-050314-f1665186f6db2ae645e60c38620ef667-3372667693';
@@ -32,6 +135,58 @@ function showNotification(message, type = "success") {
         toast.classList.add('fade-out');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// ==========================
+// 🎛️ BOTÓN DE ACCESIBILIDAD (VOZ)
+// ==========================
+function initVoiceButton() {
+  // Crear botón flotante si no existe
+  if (document.getElementById('voiceToggleBtn')) return;
+  
+  const btn = document.createElement('button');
+  btn.id = 'voiceToggleBtn';
+  btn.className = 'voice-toggle-btn';
+  btn.innerHTML = voiceEnabled ? '🔊' : '🔇';
+  btn.setAttribute('aria-label', voiceEnabled ? 'Desactivar lectura por voz' : 'Activar lectura por voz');
+  btn.setAttribute('aria-pressed', voiceEnabled);
+  btn.title = voiceEnabled ? 'Desactivar voz (V)' : 'Activar voz (V)';
+  btn.onclick = toggleVoice;
+  
+  // Estilos mínimos (puedes mover esto a tu CSS)
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: ${voiceEnabled ? '#4CAF50' : '#757575'};
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  // Efecto hover
+  btn.onmouseenter = () => btn.style.transform = 'scale(1.1)';
+  btn.onmouseleave = () => btn.style.transform = 'scale(1)';
+  
+  // Atajo de teclado: tecla V
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'v' && !e.target.matches('input, textarea')) {
+      e.preventDefault();
+      toggleVoice();
+    }
+  });
+  
+  document.body.appendChild(btn);
 }
 
 // ==========================
@@ -86,6 +241,12 @@ ${cart.map(item =>
 
     document.body.appendChild(modal);
     window.currentTicket = { ticket, total, fecha, cart };
+
+    // 🔊 AGREGAR: Leer resumen de compra (solo si voz activada)
+  if (voiceEnabled) {
+    const totalText = `$${total.toFixed(2)} pesos`;
+    speakText(`Compra procesada. Total a pagar: ${totalText}. Tu ticket está listo para imprimir o descargar.`);
+  }
     
     const closeOnEscape = (e) => {
         if (e.key === 'Escape') {
@@ -333,6 +494,9 @@ function addToCart(product) {
   
   // Notificación flotante (mejora UX)
   showNotification("✅ Producto agregado al carrito");
+
+    // 🔊 AGREGAR: Leer confirmación
+  speakText(`${product.name} agregado al carrito. Precio: ${product.price} pesos.`);
   
   // Actualizar UI
   cargarCarrito();
@@ -490,6 +654,8 @@ function eliminarProducto(index){
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
     cart.splice(index, 1);
     localStorage.setItem("cart", JSON.stringify(cart));
+      // 🔊 AGREGAR: Leer confirmación
+     speakText(`${productName} eliminado del carrito.`);
     cargarCarrito();
     cargarCarritoModal();
     showNotification("🗑️ Producto eliminado");
@@ -539,6 +705,10 @@ async function simularCompra(){
             name: localStorage.getItem('username')
         });
 
+         // 🔊 AGREGAR: Anunciar redirección a pago
+        speakText(`Procesando compra de ${cart.length} productos. Total: ${cart.reduce((s,i)=>s+i.price*i.quantity,0).toFixed(2)} pesos. Redirigiendo a pago seguro.`);
+    
+
         // ✅ 3. GUARDAR CARRITO PENDIENTE (para recuperar si cancela)
         localStorage.setItem('cart_pending', JSON.stringify(cart));
 
@@ -554,6 +724,8 @@ async function simularCompra(){
 
     } catch (error) {
         console.error("❌ Error en compra:", error);
+        // 🔊 AGREGAR: Leer error en voz alta
+        speakText(`Error al procesar el pago: ${error.message || 'Intenta de nuevo'}.`, true);
         showNotification(`❌ ${error.message || 'Error al procesar el pago'}`, "error");
         localStorage.removeItem('cart_pending');
     } finally {
@@ -737,21 +909,26 @@ function initRecoverCart() {
 // ==========================
 // INICIALIZACIÓN PRINCIPAL
 // ==========================
-function initApp() {
-    // ✅ Inicializar componentes de UI
-    actualizarUIUsuario();
-    initUserDropdown();
-    initCartModal();
-    initClearCart();
-    initThemeToggle();
-    initRecoverCart();
-    
-    // ✅ Cargar datos dinámicos
-    cargarCarrusel();
-    cargarProductos();
-    cargarCarrito();
-    cargarCarritoModal();
-}
+// ✅ Cargar voces disponibles (Chrome las carga asíncronamente)
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      console.log("🔊 Voces de síntesis cargadas:", window.speechSynthesis.getVoices().length);
+    };
+    // Forzar carga inicial
+    window.speechSynthesis.getVoices();
+  }
+  
+  // ✅ Inicializar componentes de UI
+  actualizarUIUsuario();
+  initUserDropdown();
+  initCartModal();
+  initClearCart();
+  initThemeToggle();
+  initRecoverCart();
+  
+  // 🔊 NUEVO: Inicializar botón de voz
+  initVoiceButton();
+  
 
 // ✅ Ejecutar cuando el DOM esté listo
 if (document.readyState === 'loading') {
