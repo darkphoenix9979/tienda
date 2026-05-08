@@ -846,77 +846,162 @@ img, video {
 }
 
 /* ===================================
-   BOTÓN AGREGAR AL CARRITO - ESTILO UNIFICADO
+   TARJETAS DE PRODUCTO - DISEÑO FINAL
+   =================================== */
+
+.card {
+  background: #1a1a1a; /* Fondo oscuro por defecto */
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid #333;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  border-color: #ff00cc;
+}
+
+/* Imágenes completas (Sin recortes) */
+.card img {
+  width: 100%;
+  height: 280px; /* Altura fija para alineación */
+  object-fit: contain; /* ✅ Muestra la imagen completa */
+  object-position: center;
+  background: #ffffff; /* Fondo blanco para que resalte el producto */
+  display: block;
+  padding: 10px; /* Un poco de aire alrededor */
+  box-sizing: border-box;
+}
+
+/* Contenedor de info */
+.card-info {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+/* Título del producto */
+.card-info h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #ffffff; /* ✅ BLANCO en modo oscuro */
+  min-height: 45px;
+}
+
+/* Precios / Números */
+.card-info .price {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffa500; /* ✅ NARANJA vibrante */
+  margin: 5px 0;
+}
+
+/* Texto general (Stock, etc) */
+.card-info div {
+  font-size: 14px;
+  color: #cccccc; /* Gris claro para texto secundario */
+}
+
+/* ===================================
+   BOTÓN CON ANIMACIÓN DE LLENADO
    =================================== */
 
 .add-to-cart-btn {
   width: 100%;
-  padding: 14px 20px;
-  margin-top: 12px;
-  
-  /*  COLORES DEL BOTÓN - CAMBIA ESTOS */
-  background: linear-gradient(135deg, #ff00cc 0%, #ff6b6b 100%); /* Degradado principal */
-  color: #ffffff;               /* Texto del botón */
-  border: none;                 /* Sin borde (usa "2px solid #ff00cc" si prefieres borde) */
-  box-shadow: 0 4px 15px rgba(255, 0, 204, 0.3); /* Sombra inicial */
-  
+  padding: 12px;
+  margin-top: 15px;
+  background: transparent; /* Fondo transparente inicial */
+  border: 2px solid #ff00cc; /* Borde rosa neón */
+  color: #ff00cc; /* Texto rosa inicial */
   border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  cursor: pointer;
   position: relative;
   overflow: hidden;
+  transition: color 0.3s ease;
   z-index: 1;
 }
 
-/* Emoji de carrito */
+/* Capa de color que se desliza (El relleno) */
 .add-to-cart-btn::before {
-  content: "🛒";
-  margin-right: 8px;
-  pointer-events: none; /* Evita que el emoji bloquee el clic */
-}
-
-/* Hover: cambia degradado y eleva sombra */
-.add-to-cart-btn:hover {
-  background: linear-gradient(135deg, #ff33dd 0%, #ff8585 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 0, 204, 0.5);
-}
-
-/* Click: efecto de onda */
-.add-to-cart-btn::after {
   content: "";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-  pointer-events: none;
-}
-.add-to-cart-btn:active::after {
-  width: 300px;
-  height: 300px;
+  top: 0;
+  left: -100%; /* Empieza fuera a la izquierda */
+  width: 100%;
+  height: 100%;
+  background: #ff00cc; /* Color de relleno (Rosa) */
+  transition: left 0.4s ease; /* Velocidad de la animación */
+  z-index: -1; /* Se queda detrás del texto */
 }
 
-/* Botón deshabilitado (sin stock) */
-.add-to-cart-btn:disabled,
-.add-to-cart-btn[aria-disabled="true"] {
-  background: linear-gradient(135deg, #4a4a4a 0%, #6a6a6a 100%);
-  color: #cccccc;
+/* Al pasar el mouse: El color llena el botón */
+.add-to-cart-btn:hover::before {
+  left: 0;
+}
+
+/* Al pasar el mouse: El texto se vuelve blanco para contraste */
+.add-to-cart-btn:hover {
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 0, 204, 0.4);
+}
+
+/* Botón deshabilitado */
+.add-to-cart-btn:disabled {
+  border-color: #555;
+  color: #555;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
-.add-to-cart-btn:disabled::before,
-.add-to-cart-btn[aria-disabled="true"]::before {
-  content: "❌";
+.add-to-cart-btn:disabled::before {
+  display: none;
 }
 
-/* ⚠️ ELIMINÉ EL SEGUNDO ESTILO DE BOTÓN QUE CHOCABA */
+/* ===================================
+   MODO CLARO (LIGHT MODE)
+   =================================== */
+
+[data-theme="light"] .card {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .card:hover {
+  box-shadow: 0 10px 25px rgba(65, 105, 225, 0.2); /* Sombra azul suave */
+  border-color: #4169E1;
+}
+
+[data-theme="light"] .card-info h3 {
+  color: #4169E1; /* ✅ AZUL REY (Royal Blue) */
+}
+
+[data-theme="light"] .card-info .price {
+  color: #ffa500; /* ✅ NARANJA se mantiene igual */
+}
+
+[data-theme="light"] .card-info div {
+  color: #555; /* Texto secundario gris oscuro */
+}
+
+/* Ajuste opcional para botón en modo claro (borde azul rey) */
+/* Si prefieres que el botón siga siendo rosa, borra este bloque */
+[data-theme="light"] .add-to-cart-btn {
+  border-color: #4169E1;
+  color: #4169E1;
+}
+[data-theme="light"] .add-to-cart-btn::before {
+  background: #4169E1; /* El relleno será azul rey */
+}
