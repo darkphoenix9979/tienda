@@ -909,6 +909,7 @@ function initRecoverCart() {
 // ==========================
 // INICIALIZACIÓN PRINCIPAL
 // ==========================
+function initApp() {
 // ✅ Cargar voces disponibles (Chrome las carga asíncronamente)
   if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = () => {
@@ -917,18 +918,31 @@ function initRecoverCart() {
     // Forzar carga inicial
     window.speechSynthesis.getVoices();
   }
-  
-  // ✅ Inicializar componentes de UI
-  actualizarUIUsuario();
-  initUserDropdown();
-  initCartModal();
-  initClearCart();
-  initThemeToggle();
-  initRecoverCart();
-  
-  // 🔊 NUEVO: Inicializar botón de voz
-  initVoiceButton();
-  
+
+    // ✅ Inicializar componentes de UI
+    actualizarUIUsuario();
+    initUserDropdown();
+    initCartModal();
+    initClearCart();
+    initThemeToggle();
+    initRecoverCart();
+
+    initVoiceButton();
+    
+    // ✅ Cargar datos dinámicos
+    cargarCarrusel();
+    cargarProductos();
+    cargarCarrito();
+    cargarCarritoModal();
+
+    // 🔊 Bienvenida opcional (solo primera vez que activa voz)
+  if (voiceEnabled && !sessionStorage.getItem('voiceWelcome')) {
+    setTimeout(() => {
+      speakText("Bienvenido a Tu Tienda. Usa el botón de altavoz para activar o desactivar la lectura por voz.", true);
+      sessionStorage.setItem('voiceWelcome', 'true');
+    }, 2000);
+  }
+}
 
 // ✅ Ejecutar cuando el DOM esté listo
 if (document.readyState === 'loading') {
