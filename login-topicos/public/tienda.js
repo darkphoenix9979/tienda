@@ -387,10 +387,27 @@ async function cargarProductos(){
       contenedor.appendChild(card);
     });
 
-    // ... resto de tu código de eventos ...
-    
+    // ✅ Delegación de eventos - SOLO UNA VEZ (evita descuento x2)
+    if (!cartListenerAdded) {
+      contenedor.addEventListener('click', (e) => {
+        if (e.target.classList.contains('add-to-cart-btn')) {
+          const productId = e.target.getAttribute('data-product-id');
+          const product = productsCache.find(p => p._id === productId);
+          if (product) {
+            addToCart(product);
+          }
+        }
+      });
+      cartListenerAdded = true;
+    }
+
   } catch(error) {
     console.error("❌ Error cargando productos:", error);
+    // Mostrar mensaje amigable al usuario
+    const contenedor = document.getElementById("productos");
+    if (contenedor) {
+      contenedor.innerHTML = '<p class="error-msg">⚠️ No se pudieron cargar los productos. Intenta recargar la página.</p>';
+    }
   }
 }
 
