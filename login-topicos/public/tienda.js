@@ -349,69 +349,48 @@ async function cargarProductos(){
     productsCache = products;
 
     const contenedor = document.getElementById("productos");
-    if (!contenedor) {
-      console.warn('⚠️ No se encontró el contenedor #productos');
-      return;
-    }
+    if (!contenedor) return;
     
     contenedor.innerHTML = "";
 
     products.forEach(product => {
       const card = document.createElement("div");
-card.classList.add("card");
-card.innerHTML = `
-  <img 
-    src="${product.image}" 
-    alt="${escapeHtml(product.name)} - $${product.price} MXN. Stock: ${product.stock} unidades."
-    loading="lazy"
-    width="300"
-    height="300"
-  >
-  <div class="card-info">
-    <h3>
-      <a href="#" onclick="verDetalleProducto('${product._id}'); return false;">
-        ${escapeHtml(product.name)}
-      </a>
-    </h3>
-    <div aria-label="Precio: ${product.price} pesos mexicanos">$${product.price} MXN</div>
-    <div aria-label="Disponibilidad: ${product.stock} unidades en stock">
-      Stock: ${product.stock > 0 ? '✅ Disponible' : '❌ Agotado'}
-    </div>
-    <button 
-      class="add-to-cart-btn" 
-      data-product-id="${product._id}"
-      aria-label="Agregar ${escapeHtml(product.name)} al carrito, precio ${product.price} pesos"
-      ${product.stock <= 0 ? 'disabled aria-disabled="true"' : ''}
-    >
-      ${product.stock > 0 ? 'Agregar al carrito' : 'Agotado'}
-    </button>
-  </div>
+      card.classList.add("card"); // ✅ Ya la tienes
+      
+      // Agrega clase específica para stock
+      const stockClass = product.stock > 0 ? 'in-stock' : 'out-of-stock';
+      
+      card.innerHTML = `
+        <img 
+          src="${product.image}" 
+          alt="${escapeHtml(product.name)} - $${product.price} MXN"
+          loading="lazy"
+          width="300"
+          height="280"
+        >
+        <div class="card-info">
+          <h3>${escapeHtml(product.name)}</h3>
+          <div class="price">$${product.price} MXN</div>
+          <div class="stock ${stockClass}">
+            Stock: ${product.stock > 0 ? '✅ Disponible' : '❌ Agotado'}
+          </div>
+          <button 
+            class="add-to-cart-btn" 
+            data-product-id="${product._id}"
+            ${product.stock <= 0 ? 'disabled' : ''}
+            aria-label="Agregar ${escapeHtml(product.name)} al carrito"
+          >
+            ${product.stock > 0 ? 'Agregar al carrito' : 'Agotado'}
+          </button>
         </div>
       `;
       contenedor.appendChild(card);
     });
 
-    // ✅ Delegación de eventos - SOLO UNA VEZ (evita descuento x2)
-    if (!cartListenerAdded) {
-      contenedor.addEventListener('click', (e) => {
-        if (e.target.classList.contains('add-to-cart-btn')) {
-          const productId = e.target.getAttribute('data-product-id');
-          const product = productsCache.find(p => p._id === productId);
-          if (product) {
-            addToCart(product);
-          }
-        }
-      });
-      cartListenerAdded = true;
-    }
-
+    // ... resto de tu código de eventos ...
+    
   } catch(error) {
     console.error("❌ Error cargando productos:", error);
-    // Mostrar mensaje amigable al usuario
-    const contenedor = document.getElementById("productos");
-    if (contenedor) {
-      contenedor.innerHTML = '<p class="error-msg">⚠️ No se pudieron cargar los productos. Intenta recargar la página.</p>';
-    }
   }
 }
 
