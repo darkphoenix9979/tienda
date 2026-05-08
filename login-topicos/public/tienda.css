@@ -1003,5 +1003,5 @@ img, video {
   color: #4169E1;
 }
 [data-theme="light"] .add-to-cart-btn::before {
-  background: #4169E1; /* El relleno será azul rey */
+  background: #ffffff; /* El relleno será azul rey */
 }
