@@ -895,7 +895,7 @@ img, video {
   font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
-  color: #ffffff; /* ✅ BLANCO en modo oscuro */
+  color: #000000; /* ✅ BLANCO en modo oscuro */
   min-height: 45px;
 }
 
