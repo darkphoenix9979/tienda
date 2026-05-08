@@ -111,7 +111,7 @@ router.post("/verify-2fa", async (req, res) => {
       username: pending.username,
       email: pending.email,
       password: pending.password,
-      role: "customer",
+      role: "user",
       twoFAEnabled: true
     });
 
