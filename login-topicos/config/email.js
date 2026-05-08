@@ -22,10 +22,10 @@ async function sendVerificationEmail(email, code) {
     },
     body: JSON.stringify({
       // ✅ Remitente: puede ser cualquier email, Brevo lo acepta en free tier
-      sender: { 
-        name: "Tu Tienda", 
-        email: "noreply@tu-tienda.com" // ← Email genérico, no necesita ser real
-      },
+    sender: { 
+         name: "Tu Tienda", 
+        email: process.env.BREVO_SENDER || "camposfede76@gmail.com" // ✅ Tu email real verificado en Brevo
+    },
       to: [{ email }], // ✅ Destinatario: CUALQUIER correo real
       subject: "🔐 Código de verificación - Tu Tienda",
       textContent: `Tu código de verificación es: ${code}\n\nExpira en 10 minutos.\n\nSi no solicitaste este registro, ignora este mensaje.`,
