@@ -32,29 +32,25 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
         const data = await res.json();
 
-        if(res.ok){
+        // 🔹 LOGIN - Sección corregida (dentro de if(res.ok))
+    if(res.ok){
 
-            // guardar sesión
-            localStorage.setItem("token","autenticado");
-            localStorage.setItem("username",data.username);
-            localStorage.setItem("role",data.role);
+        // ✅ CORREGIDO: Usar el token REAL que envía el backend
+        localStorage.setItem("token", data.token);  // ← Cambiar "autenticado" por data.token
+        localStorage.setItem("username", data.username);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("userId", data.userId); // ← Opcional pero útil
 
-            // redirección según rol
-            if(data.role === "admin"){
-
-                window.location.href = "admin.html";
-
-            }else{
-
-                window.location.href = "tienda.html";
-
-            }
-
+        // redirección según rol
+        if(data.role === "admin"){
+            window.location.href = "admin.html";
         }else{
-
-            alert(data.message);
-
+            window.location.href = "tienda.html";
         }
+
+    }else{
+    alert(data.message);
+}
 
     }catch(error){
 

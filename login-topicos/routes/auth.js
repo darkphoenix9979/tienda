@@ -144,7 +144,7 @@ router.post("/verify-2fa", async (req, res) => {
   }
 });
 
-// 🔹 LOGIN (sin cambios mayores, pero puedes agregar validación de 2FA si quieres)
+// 🔹 LOGIN (CORREGIDO - con claims compatibles con verifyToken.js)
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -161,14 +161,24 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Contraseña incorrecta" });
     }
 
-    // 🔐 Opcional: Si el usuario tiene 2FA activado, pedir código aquí también
-    // if (user.twoFAEnabled) { ... }
+    // ✅ GENERAR TOKEN con claims que verifyToken.js espera
+    const token = jwt.sign(
+      { 
+        userId: user._id,    // ← Coincide con decoded.userId en verifyToken
+        username: user.username,
+        role: user.role       // ← ← ← ESTO ES CRÍTICO para verificarAdmin
+      },
+      process.env.JWT_SECRET || "secreto123",
+      { expiresIn: "24h" }
+    );
 
+    // ✅ ENVIAR token al frontend
     res.status(200).json({
       message: "Login exitoso",
+      token,                    // ← El frontend debe guardar esto
       role: user.role,
-      username: user.username
-      // token: ... si usas JWT
+      username: user.username,
+      userId: user._id
     });
 
   } catch (error) {

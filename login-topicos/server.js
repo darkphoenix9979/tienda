@@ -3,6 +3,7 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 const path = require("path");
 const cors = require("cors");
+const verifyToken = require("./middleware/verifyToken"); // ← Tu middleware existente
 require("dotenv").config();
 
 const app = express();
@@ -46,11 +47,11 @@ app.use("/api/payment", paymentRoutes);
    MIDDLEWARE: VERIFICAR ADMIN
 ========================== */
 
-// 🔐 Verifica que el usuario tenga rol admin
-// Ajusta 'req.usuario' a 'req.user' si tu auth usa ese nombre
+// 🔐 Verifica que req.user.role sea 'admin'
+// (req.user ya fue seteado por verifyToken.js)
 const verificarAdmin = (req, res, next) => {
-  if (!req.usuario || req.usuario.role !== "admin") {
-    return res.status(403).json({ message: "Acceso denegado" });
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Acceso denegado: se requiere rol admin" });
   }
   next();
 };
@@ -60,9 +61,8 @@ const verificarAdmin = (req, res, next) => {
 ========================== */
 
 // GET /api/users - Listar usuarios (sin passwords)
-app.get("/api/users", verificarAdmin, async (req, res) => {
+app.get("/api/users", verifyToken, verificarAdmin, async (req, res) => {
   try {
-    // 🔒 Excluir campos sensibles de la respuesta
     const usuarios = await User.find({}, "-password -__v -resetToken -resetTokenExpire");
     res.json(usuarios);
   } catch (error) {
@@ -72,17 +72,16 @@ app.get("/api/users", verificarAdmin, async (req, res) => {
 });
 
 // PUT /api/users/:id/role - Cambiar rol de usuario
-app.put("/api/users/:id/role", verificarAdmin, async (req, res) => {
+app.put("/api/users/:id/role", verifyToken, verificarAdmin, async (req, res) => {
   try {
     const { role } = req.body;
     
-    // Validar rol permitido
     if (!["admin", "user", "moderator"].includes(role)) {
       return res.status(400).json({ message: "Rol no válido" });
     }
     
-    // 🔐 Prevenir que el último admin pierda su rol
-    if (role !== "admin" && req.usuario._id === req.params.id) {
+    // Prevenir que el último admin pierda su rol
+    if (role !== "admin" && req.user.id === req.params.id) {
       const adminsCount = await User.countDocuments({ role: "admin" });
       if (adminsCount <= 1) {
         return res.status(400).json({ message: "Debe haber al menos un administrador" });
@@ -108,10 +107,10 @@ app.put("/api/users/:id/role", verificarAdmin, async (req, res) => {
 });
 
 // DELETE /api/users/:id - Eliminar usuario
-app.delete("/api/users/:id", verificarAdmin, async (req, res) => {
+app.delete("/api/users/:id", verifyToken, verificarAdmin, async (req, res) => {
   try {
-    // 🔐 Prevenir auto-eliminación
-    if (req.usuario._id === req.params.id) {
+    // Prevenir auto-eliminación
+    if (req.user.id === req.params.id) {
       return res.status(400).json({ message: "No puedes eliminar tu propia cuenta" });
     }
     

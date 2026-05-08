@@ -10,9 +10,17 @@ module.exports = function (req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "secreto123");
-    req.user = { id: decoded.id, username: decoded.username };
+    
+    // ✅ Incluir role + manejar tanto 'id' como 'userId' del payload
+    req.user = { 
+      id: decoded.userId || decoded.id,  // Soporta ambos nombres
+      username: decoded.username,
+      role: decoded.role                  // ← ESTO FALTABA (necesario para verificarAdmin)
+    };
+    
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Token inválido" });
+    console.error("Error verificando token:", err.message);
+    return res.status(401).json({ message: "Token inválido o expirado" });
   }
 };

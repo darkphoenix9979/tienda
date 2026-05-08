@@ -20,6 +20,16 @@ function setMessage(text) {
   }
 }
 
+// 🔐 Helper: obtener headers con token de autorización
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  const headers = { "Content-Type": "application/json" };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 // ==========================
 // PREVIEW IMAGEN
 // ==========================
@@ -366,33 +376,59 @@ function logout(){
 }
 
 // ==========================
-// DASHBOARD
+// DASHBOARD (CON TOKEN)
 // ==========================
 async function cargarDashboard(){
   try{
+    // 🔐 Token para requests protegidos
+    const token = localStorage.getItem("token");
+    const authHeaders = token ? { "Authorization": `Bearer ${token}` } : {};
+
+    // Total Productos (público)
     const totalProductosEl = document.getElementById("totalProductos");
     if(totalProductosEl) {
       const resProductos = await fetch("/api/products");
-      const productos = await resProductos.json();
-      totalProductosEl.innerText = productos.length;
+      if(resProductos.ok) {
+        const productos = await resProductos.json();
+        totalProductosEl.innerText = Array.isArray(productos) ? productos.length : "0";
+      }
     }
 
+    // Dentro de cargarDashboard(), para totalUsuarios:
     const totalUsuariosEl = document.getElementById("totalUsuarios");
-    if(totalUsuariosEl) {
-      const resUsuarios = await fetch("/api/users");
+     if(totalUsuariosEl) {
+      try {
+      const resUsuarios = await fetch("/api/users", { 
+      headers: getAuthHeaders()  // ← Token incluido
+    });
+     if(resUsuarios.ok) {
       const usuarios = await resUsuarios.json();
-      totalUsuariosEl.innerText = usuarios.length;
+      totalUsuariosEl.innerText = Array.isArray(usuarios) ? usuarios.length : "0";
+    } else {
+      totalUsuariosEl.innerText = "0"; // Fallback seguro
     }
+  } catch(err) {
+    console.warn("⚠️ No se pudo cargar total de usuarios:", err);
+    totalUsuariosEl.innerText = "0";
+  }
+}
 
+    // Total Preguntas (público)
     const totalPreguntasEl = document.getElementById("totalPreguntas");
     if(totalPreguntasEl) {
-      const resPreguntas = await fetch("/unknown_questions.json");
-      const preguntas = await resPreguntas.json();
-      totalPreguntasEl.innerText = preguntas.length;
+      try {
+        const resPreguntas = await fetch("/unknown_questions.json");
+        if(resPreguntas.ok) {
+          const preguntas = await resPreguntas.json();
+          totalPreguntasEl.innerText = Array.isArray(preguntas) ? preguntas.length : "0";
+        }
+      } catch(err) {
+        totalPreguntasEl.innerText = "0";
+      }
     }
 
   } catch(error){
-    console.error("Error cargando dashboard", error);
+    console.error("❌ Error cargando dashboard", error);
   }
 }
 
@@ -412,7 +448,7 @@ function setMessageUsers(text) {
 }
 
 // ==========================
-// CARGAR USUARIOS
+// CARGAR USUARIOS (CON TOKEN)
 // ==========================
 async function cargarUsuarios() {
   try {
@@ -421,13 +457,25 @@ async function cargarUsuarios() {
 
     list.innerHTML = "<p style='text-align:center'>⏳ Cargando...</p>";
 
-    const res = await fetch("/api/users", {
-      headers: { "Content-Type": "application/json" }
-    });
+    // 🔐 Obtener token del localStorage (ajusta la clave si usas otra)
+    const token = localStorage.getItem("token"); // o "authToken", "access_token", etc.
+
+    const headers = { "Content-Type": "application/json" };
+    if(token) {
+      headers["Authorization"] = `Bearer ${token}`; // ✅ Enviar token
+    }
+
+    // Dentro de cargarUsuarios(), reemplaza el fetch por:
+    const res = await fetch("/api/users", { 
+    headers: getAuthHeaders()  // ← Incluye el token automáticamente
+  });
     
     if(!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Error al cargar usuarios");
+      if(res.status === 403) {
+        throw new Error("🔐 Sesión expirada o permisos insuficientes");
+      }
+      throw new Error(err.message || `Error ${res.status}`);
     }
     
     const usuarios = await res.json();
@@ -438,7 +486,7 @@ async function cargarUsuarios() {
       return;
     }
 
-    // 🔒 Sanitización contra XSS
+    // ... [resto del renderizado igual que antes] ...
     const escape = (str) => {
       const div = document.createElement("div");
       div.textContent = str || "";
@@ -446,7 +494,6 @@ async function cargarUsuarios() {
     };
 
     usuarios.forEach(u => {
-      // Ofuscar email parcialmente
       const email = u.email || "";
       const emailDisplay = email.length > 10 
         ? email.substring(0, 3) + "***@" + email.split("@")[1] 
@@ -454,22 +501,22 @@ async function cargarUsuarios() {
 
       const item = document.createElement("div");
       item.className = "user-item";
-      item.style.cssText = "padding:12px; border:1px solid #ddd; border-radius:8px; background:#fff; display:flex; justify-content:space-between; align-items:center;";
+      item.style.cssText = "padding:12px; border:1px solid #ddd; border-radius:8px; background:#fff; display:flex; justify-content:space-between; align-items:center; margin:5px 0;";
       
       item.innerHTML = `
         <div>
-          <strong>${escape(u.username)}</strong><br>
+          <strong>${escape(u.username || "Sin nombre")}</strong><br>
           <small style="color:#666">${escape(emailDisplay)}</small><br>
           <span style="display:inline-block; padding:3px 8px; border-radius:4px; font-size:12px; background:${u.role === 'admin' ? '#dc3545' : '#0d6efd'}; color:white; margin-top:5px;">
-            ${escape(u.role)}
+            ${escape(u.role || "user")}
           </span>
         </div>
         <div style="display:flex; gap:8px;">
-          <button onclick="editarRolUsuario('${u._id}', '${u.role}')" 
+          <button onclick="editarRolUsuario('${u._id}', '${u.role || "user"}')" 
                   style="padding:6px 12px; background:#0d6efd; color:white; border:none; border-radius:4px; cursor:pointer;">
             ✏️ Rol
           </button>
-          <button onclick="eliminarUsuario('${u._id}', '${escape(u.username)}')" 
+          <button onclick="eliminarUsuario('${u._id}', '${escape(u.username || "Usuario")}')" 
                   style="padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer;">
             🗑️
           </button>
@@ -479,10 +526,21 @@ async function cargarUsuarios() {
     });
 
   } catch(error) {
-    console.error("Error cargando usuarios:", error);
+    console.error("❌ Error cargando usuarios:", error);
     const list = document.getElementById("userList");
-    if(list) list.innerHTML = `<p style="color:#dc3545; text-align:center;">❌ ${escapeHtml(error.message)}</p>`;
-    setMessageUsers("❌ Error: " + error.message);
+    if(list) {
+      list.innerHTML = `<p style="color:#dc3545; text-align:center; padding:20px;">
+        ❌ ${error.message}<br>
+        <small>${error.message.includes("Sesión") ? 'Intenta iniciar sesión de nuevo' : 'Revisa la consola (F12)'} </small>
+      </p>`;
+    }
+    // Si es error de autenticación, redirigir al login
+    if(error.message.includes("Sesión") || error.message.includes("permisos")) {
+      setTimeout(() => {
+        localStorage.clear();
+        window.location.href = "login.html";
+      }, 2000);
+    }
   }
 }
 
