@@ -846,96 +846,20 @@ img, video {
 }
 
 /* ===================================
-   TARJETAS DE PRODUCTO - MEJORADAS
-   =================================== */
-
-.card {
-  background: #1a1a1a;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  border: 1px solid #2a2a2a;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(255, 0, 204, 0.3);
-  border-color: #ff00cc;
-}
-
-/* Contenedor de imagen - TAMAÑO CONSISTENTE */
-.card img {
-  width: 100%;
-  height: 280px; /* Altura fija para todas */
-  object-fit: cover; /* Recorta sin deformar */
-  object-position: center;
-  background: #f5f5f5; /* Fondo gris claro mientras carga */
-  display: block;
-}
-
-/* Información del producto */
-.card-info {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-grow: 1;
-}
-
-.card-info h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #ff00cc;
-  line-height: 1.3;
-  min-height: 40px; /* Altura mínima para títulos de 2 líneas */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.card-info div {
-  color: #fff;
-  font-size: 14px;
-}
-
-/* Precio destacado */
-.card-info .price,
-.card-info div:first-of-type {
-  font-size: 20px;
-  font-weight: bold;
-  color: #00ff88;
-}
-
-/* Stock con emoji */
-.card-info .stock {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #00ff88;
-  font-size: 13px;
-}
-
-.card-info .stock::before {
-  content: "✅";
-  font-size: 16px;
-}
-
-/* ===================================
-   BOTÓN AGREGAR AL CARRITO - PREMIUM
+   BOTÓN AGREGAR AL CARRITO - ESTILO UNIFICADO
    =================================== */
 
 .add-to-cart-btn {
   width: 100%;
   padding: 14px 20px;
   margin-top: 12px;
-  background: linear-gradient(135deg, #ff00cc 0%, #ff6b6b 100%);
-  color: white;
-  border: none;
+  
+  /*  COLORES DEL BOTÓN - CAMBIA ESTOS */
+  background: linear-gradient(135deg, #ff00cc 0%, #ff6b6b 100%); /* Degradado principal */
+  color: #ffffff;               /* Texto del botón */
+  border: none;                 /* Sin borde (usa "2px solid #ff00cc" si prefieres borde) */
+  box-shadow: 0 4px 15px rgba(255, 0, 204, 0.3); /* Sombra inicial */
+  
   border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
@@ -945,26 +869,24 @@ img, video {
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(255, 0, 204, 0.3);
+  z-index: 1;
 }
 
+/* Emoji de carrito */
 .add-to-cart-btn::before {
   content: "🛒";
   margin-right: 8px;
+  pointer-events: none; /* Evita que el emoji bloquee el clic */
 }
 
+/* Hover: cambia degradado y eleva sombra */
 .add-to-cart-btn:hover {
+  background: linear-gradient(135deg, #ff33dd 0%, #ff8585 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 0, 204, 0.5);
-  background: linear-gradient(135deg, #ff33dd 0%, #ff8585 100%);
 }
 
-.add-to-cart-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(255, 0, 204, 0.3);
-}
-
-/* Efecto de onda al hacer clic */
+/* Click: efecto de onda */
 .add-to-cart-btn::after {
   content: "";
   position: absolute;
@@ -976,8 +898,8 @@ img, video {
   background: rgba(255, 255, 255, 0.3);
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
+  pointer-events: none;
 }
-
 .add-to-cart-btn:active::after {
   width: 300px;
   height: 300px;
@@ -986,79 +908,15 @@ img, video {
 /* Botón deshabilitado (sin stock) */
 .add-to-cart-btn:disabled,
 .add-to-cart-btn[aria-disabled="true"] {
-  background: linear-gradient(135deg, #555 0%, #777 100%);
+  background: linear-gradient(135deg, #4a4a4a 0%, #6a6a6a 100%);
+  color: #cccccc;
   cursor: not-allowed;
-  opacity: 0.6;
   transform: none;
   box-shadow: none;
 }
-
 .add-to-cart-btn:disabled::before,
 .add-to-cart-btn[aria-disabled="true"]::before {
   content: "❌";
 }
 
-/* ===================================
-   RESPONSIVE - MÓVIL
-   =================================== */
-
-@media (max-width: 768px) {
-  .card img {
-    height: 220px; /* Un poco más pequeño en móvil */
-  }
-  
-  .add-to-cart-btn {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-}
-
-/* ===================================
-   MODO OSCURO/CLARO - COMPATIBLE
-   =================================== */
-
-[data-theme="light"] .card {
-  background: #fff;
-  border-color: #e0e0e0;
-  color: #333;
-}
-
-[data-theme="light"] .card-info h3 {
-  color: #ffffff;
-}
-
-[data-theme="light"] .card-info div {
-  color: #333;
-}
-
-[data-theme="light"] .card-info .price {
-  color: #00aa55;
-}
-
-.add-to-cart-btn {
-  background: transparent;
-  border: 2px solid #ff00cc;
-  color: #ff00cc;
-  position: relative;
-  overflow: hidden;
-}
-
-.add-to-cart-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: #ff00cc;
-  transition: left 0.3s ease;
-  z-index: -1;
-}
-
-.add-to-cart-btn:hover::before {
-  left: 0;
-}
-
-.add-to-cart-btn:hover {
-  color: white;
-}
+/* ⚠️ ELIMINÉ EL SEGUNDO ESTILO DE BOTÓN QUE CHOCABA */
