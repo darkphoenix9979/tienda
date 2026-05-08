@@ -6,6 +6,7 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "mercadopago": "^2.12.0",
+    "node-fetch": "^2.7.0",
     "nodemailer": "^8.0.7",
     "resend": "^6.12.3"
   }
