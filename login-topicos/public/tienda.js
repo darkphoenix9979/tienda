@@ -156,7 +156,7 @@ function initVoiceButton() {
   // Estilos mínimos (puedes mover esto a tu CSS)
   btn.style.cssText = `
     position: fixed;
-    bottom: 20px;
+    bottom: 100px;
     right: 20px;
     width: 50px;
     height: 50px;
@@ -167,7 +167,7 @@ function initVoiceButton() {
     font-size: 24px;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1000;
+    z-index: 10000;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
