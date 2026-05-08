@@ -358,16 +358,34 @@ async function cargarProductos(){
 
     products.forEach(product => {
       const card = document.createElement("div");
-      card.classList.add("card");
-      card.innerHTML = `
-        <img src="${product.image}" alt="${escapeHtml(product.name)}" loading="lazy">
-        <div class="card-info">
-          <h3>${escapeHtml(product.name)}</h3>
-          <div>$${product.price} MXN</div>
-          <div>Stock: ${product.stock}</div>
-          <button class="add-to-cart-btn" data-product-id="${product._id}">
-            Agregar al carrito
-          </button>
+card.classList.add("card");
+card.innerHTML = `
+  <img 
+    src="${product.image}" 
+    alt="${escapeHtml(product.name)} - $${product.price} MXN. Stock: ${product.stock} unidades."
+    loading="lazy"
+    width="300"
+    height="300"
+  >
+  <div class="card-info">
+    <h3>
+      <a href="#" onclick="verDetalleProducto('${product._id}'); return false;">
+        ${escapeHtml(product.name)}
+      </a>
+    </h3>
+    <div aria-label="Precio: ${product.price} pesos mexicanos">$${product.price} MXN</div>
+    <div aria-label="Disponibilidad: ${product.stock} unidades en stock">
+      Stock: ${product.stock > 0 ? '✅ Disponible' : '❌ Agotado'}
+    </div>
+    <button 
+      class="add-to-cart-btn" 
+      data-product-id="${product._id}"
+      aria-label="Agregar ${escapeHtml(product.name)} al carrito, precio ${product.price} pesos"
+      ${product.stock <= 0 ? 'disabled aria-disabled="true"' : ''}
+    >
+      ${product.stock > 0 ? 'Agregar al carrito' : 'Agotado'}
+    </button>
+  </div>
         </div>
       `;
       contenedor.appendChild(card);
