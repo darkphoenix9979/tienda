@@ -397,6 +397,219 @@ async function cargarDashboard(){
 }
 
 // ==========================
+// 👥 GESTIÓN DE USUARIOS (Integración Admin Panel)
+// ==========================
+
+// Función segura para mensajes en panel usuarios
+function setMessageUsers(text) {
+  const msg = document.getElementById("messageUsers");
+  if(msg) {
+    msg.innerText = text;
+    msg.style.display = text ? 'block' : 'none';
+    // Auto-ocultar después de 4 segundos
+    if(text) setTimeout(() => msg.style.display = 'none', 4000);
+  }
+}
+
+// ==========================
+// CARGAR USUARIOS
+// ==========================
+async function cargarUsuarios() {
+  try {
+    const list = document.getElementById("userList");
+    if(!list) return;
+
+    list.innerHTML = "<p style='text-align:center'>⏳ Cargando...</p>";
+
+    const res = await fetch("/api/users", {
+      headers: { "Content-Type": "application/json" }
+    });
+    
+    if(!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Error al cargar usuarios");
+    }
+    
+    const usuarios = await res.json();
+    list.innerHTML = "";
+
+    if(!usuarios || usuarios.length === 0) {
+      list.innerHTML = "<p style='text-align:center; color:#666'>No hay usuarios registrados</p>";
+      return;
+    }
+
+    // 🔒 Sanitización contra XSS
+    const escape = (str) => {
+      const div = document.createElement("div");
+      div.textContent = str || "";
+      return div.innerHTML;
+    };
+
+    usuarios.forEach(u => {
+      // Ofuscar email parcialmente
+      const email = u.email || "";
+      const emailDisplay = email.length > 10 
+        ? email.substring(0, 3) + "***@" + email.split("@")[1] 
+        : "***";
+
+      const item = document.createElement("div");
+      item.className = "user-item";
+      item.style.cssText = "padding:12px; border:1px solid #ddd; border-radius:8px; background:#fff; display:flex; justify-content:space-between; align-items:center;";
+      
+      item.innerHTML = `
+        <div>
+          <strong>${escape(u.username)}</strong><br>
+          <small style="color:#666">${escape(emailDisplay)}</small><br>
+          <span style="display:inline-block; padding:3px 8px; border-radius:4px; font-size:12px; background:${u.role === 'admin' ? '#dc3545' : '#0d6efd'}; color:white; margin-top:5px;">
+            ${escape(u.role)}
+          </span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button onclick="editarRolUsuario('${u._id}', '${u.role}')" 
+                  style="padding:6px 12px; background:#0d6efd; color:white; border:none; border-radius:4px; cursor:pointer;">
+            ✏️ Rol
+          </button>
+          <button onclick="eliminarUsuario('${u._id}', '${escape(u.username)}')" 
+                  style="padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer;">
+            🗑️
+          </button>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+
+  } catch(error) {
+    console.error("Error cargando usuarios:", error);
+    const list = document.getElementById("userList");
+    if(list) list.innerHTML = `<p style="color:#dc3545; text-align:center;">❌ ${escapeHtml(error.message)}</p>`;
+    setMessageUsers("❌ Error: " + error.message);
+  }
+}
+
+// ==========================
+// EDITAR ROL
+// ==========================
+function editarRolUsuario(userId, currentRole) {
+  const roles = ["admin", "user", "moderator"];
+  const nuevoRol = prompt(
+    `Rol actual: ${currentRole}\n\nOpciones válidas: ${roles.join(", ")}`,
+    currentRole
+  );
+  
+  if(!nuevoRol || nuevoRol.trim() === "") return;
+  const rolLimpio = nuevoRol.trim().toLowerCase();
+  
+  if(!roles.includes(rolLimpio)) {
+    alert("❌ Rol no válido. Usa: " + roles.join(", "));
+    return;
+  }
+  
+  // Confirmación para cambios sensibles
+  if(currentRole === "admin" || rolLimpio === "admin") {
+    if(!confirm("⚠️ Estás modificando un rol de ADMINISTRADOR.\n¿Confirmar cambio?")) return;
+  }
+  
+  actualizarRolUsuario(userId, rolLimpio);
+}
+
+async function actualizarRolUsuario(userId, nuevoRol) {
+  try {
+    setMessageUsers("🔄 Actualizando...");
+    
+    const res = await fetch(`/api/users/${userId}/role`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: nuevoRol })
+    });
+    
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.message || "Error al actualizar");
+    
+    setMessageUsers("✅ Rol actualizado");
+    await cargarUsuarios();
+    if(typeof cargarDashboard === "function") await cargarDashboard();
+    
+  } catch(error) {
+    console.error("Error:", error);
+    setMessageUsers("❌ " + error.message);
+    alert("Error: " + error.message);
+  }
+}
+
+// ==========================
+// ELIMINAR USUARIO
+// ==========================
+async function eliminarUsuario(userId, username) {
+  if(!confirm(`¿Eliminar usuario "${username}"?\n\nEsta acción no se puede deshacer.`)) return;
+  
+  // Prevenir auto-eliminación
+  const currentUsername = localStorage.getItem("username");
+  if(username === currentUsername) {
+    if(!confirm("⚠️ Estás intentando eliminar TU PROPIA cuenta.\n¿Continuar?")) return;
+  }
+
+  try {
+    setMessageUsers("🗑️ Eliminando...");
+    
+    const res = await fetch(`/api/users/${userId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json"
+    }});
+    
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.message || "Error al eliminar");
+    
+    setMessageUsers("✅ Usuario eliminado");
+    await cargarUsuarios();
+    if(typeof cargarDashboard === "function") await cargarDashboard();
+    
+  } catch(error) {
+    console.error("Error:", error);
+    setMessageUsers("❌ " + error.message);
+    alert("Error: " + error.message);
+  }
+}
+
+// ==========================
+// BUSCADOR EN TIEMPO REAL
+// ==========================
+function setupUserSearch() {
+  const search = document.getElementById("userSearch");
+  if(!search) return;
+  
+  search.addEventListener("input", (e) => {
+    const term = e.target.value.toLowerCase();
+    const items = document.querySelectorAll("#userList .user-item");
+    
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(term) ? "flex" : "none";
+    });
+  });
+}
+
+// ==========================
+// INICIALIZACIÓN
+// ==========================
+document.addEventListener("DOMContentLoaded", () => {
+  // Tus inicializaciones existentes...
+  if(document.getElementById("productList")) cargarProductos();
+  if(document.getElementById("carouselList")) cargarCarruselAdmin();
+  if(document.getElementById("questionsList")) cargarPreguntas();
+  if(document.getElementById("totalProductos") || document.getElementById("totalUsuarios")) cargarDashboard();
+  
+  // ✅ Nueva inicialización para usuarios
+  setupUserSearch();
+});
+
+// Helper global para sanitización (si no existe)
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str || "";
+  return div.innerHTML;
+}
+
+// ==========================
 // INICIO
 // ==========================
 document.addEventListener("DOMContentLoaded", () => {

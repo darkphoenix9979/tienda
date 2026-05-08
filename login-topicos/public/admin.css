@@ -307,3 +307,24 @@ form button:hover {
     width: 100%;
   }
 }
+
+/* 👥 Estilos para gestión de usuarios */
+.user-item {
+  transition: box-shadow 0.2s;
+}
+.user-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+#userList {
+  min-height: 200px;
+}
+.message-box {
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+  background: #e7f3ff;
+  border-left: 4px solid #2196F3;
+}
+.message-box:empty {
+  display: none;
+}

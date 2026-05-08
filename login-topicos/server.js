@@ -87,6 +87,72 @@ app.get("/api/chatbot/questions", async (req, res) => {
 
 });
 
+// 🔐 Middleware: verificar que sea admin
+const verificarAdmin = (req, res, next) => {
+  if (req.usuario?.role !== 'admin') {
+    return res.status(403).json({ message: "Acceso denegado" });
+  }
+  next();
+};
+
+// GET /api/users - Listar usuarios (sin passwords)
+app.get("/api/users", verificarAdmin, async (req, res) => {
+  try {
+    // 🔒 PROYECTAR para EXCLUIR password y datos sensibles
+    const usuarios = await User.find({}, "-password -__v -resetToken");
+    res.json(usuarios);
+  } catch (error) {
+    res.status(500).json({ message: "Error del servidor", error: error.message });
+  }
+});
+
+// PUT /api/users/:id/role - Cambiar rol
+app.put("/api/users/:id/role", verificarAdmin, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!["admin", "user", "moderator"].includes(role)) {
+      return res.status(400).json({ message: "Rol no válido" });
+    }
+    
+    // 🔐 Prevenir auto-eliminación de último admin
+    if (role !== "admin") {
+      const adminsCount = await User.countDocuments({ role: "admin" });
+      if (adminsCount <= 1 && req.usuario._id === req.params.id) {
+        return res.status(400).json({ message: "Debe haber al menos un admin" });
+      }
+    }
+    
+    const usuario = await User.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true, select: "-password" }
+    );
+    
+    if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
+    
+    res.json({ message: "Rol actualizado", usuario });
+  } catch (error) {
+    res.status(500).json({ message: "Error del servidor" });
+  }
+});
+
+// DELETE /api/users/:id - Eliminar usuario
+app.delete("/api/users/:id", verificarAdmin, async (req, res) => {
+  try {
+    // 🔐 Prevenir eliminación del propio admin
+    if (req.usuario._id === req.params.id) {
+      return res.status(400).json({ message: "No puedes eliminarte a ti mismo" });
+    }
+    
+    const usuario = await User.findByIdAndDelete(req.params.id);
+    if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
+    
+    res.json({ message: "Usuario eliminado" });
+  } catch (error) {
+    res.status(500).json({ message: "Error del servidor" });
+  }
+});
+
 /* ==========================
    CONEXIÓN A MONGODB
 ========================== */
