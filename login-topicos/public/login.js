@@ -12,52 +12,71 @@ function togglePassword(id){
     input.type = input.type === "password" ? "text" : "password";
 }
 
-// LOGIN
+// LOGIN - Versión corregida con reCAPTCHA ✅
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
-
     e.preventDefault();
 
-    const email = document.getElementById("loginEmail").value;
+    // 🔐 1. Validar reCAPTCHA PRIMERO (antes de cualquier llamada al backend)
+    if (!recaptchaToken) {
+        alert("⚠️ Por favor, completa la verificación de seguridad");
+        if (typeof grecaptcha !== 'undefined') {
+            const widget = document.querySelector('.g-recaptcha');
+            if (widget) widget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
+
+    // 📥 2. Obtener credenciales (una sola vez)
+    const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value;
 
-    try {
+    // 🔍 Validación básica de campos
+    if (!email || !password) {
+        alert("Por favor, completa todos los campos");
+        return;
+    }
 
-        const res = await fetch("/api/auth/login",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({email,password})
+    try {
+        // 🌐 3. ÚNICA petición al backend con todos los datos
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                email, 
+                password,
+                recaptchaToken  // ✅ Token enviado al backend
+            })
         });
 
         const data = await res.json();
+        console.log("📡 Respuesta login:", res.status, data);
 
-        // 🔹 LOGIN - Sección corregida (dentro de if(res.ok))
-    if(res.ok){
+        if (res.ok) {
+            // ✅ Login exitoso: limpiar token y guardar sesión
+            recaptchaToken = null;
+            if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+            
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("username", data.username);
+            localStorage.setItem("role", data.role);
+            localStorage.setItem("userId", data.userId);
 
-        // ✅ CORREGIDO: Usar el token REAL que envía el backend
-        localStorage.setItem("token", data.token);  // ← Cambiar "autenticado" por data.token
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("userId", data.userId); // ← Opcional pero útil
-
-        // redirección según rol
-        if(data.role === "admin"){
-            window.location.href = "admin.html";
-        }else{
-            window.location.href = "tienda.html";
+            // 🎯 Redirección según rol
+            const redirectUrl = data.role === "admin" ? "admin.html" : "tienda.html";
+            window.location.href = redirectUrl;
+            
+        } else {
+            // ❌ Login fallido: mostrar error y resetear reCAPTCHA
+            alert(data.message || "Credenciales inválidas");
+            resetRecaptcha();  // 🔁 Permitir nuevo intento
         }
 
-    }else{
-    alert(data.message);
-}
-
-    }catch(error){
-
-        console.error("Error:",error);
-
+    } catch (error) {
+        // 🚨 Error de red o servidor
+        console.error("💥 Error en login:", error);
+        alert("Error de conexión. Verifica tu internet e intenta nuevamente.");
+        resetRecaptcha();
     }
-
 });
 
 
@@ -408,6 +427,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Variable global para almacenar el token de reCAPTCHA
+let recaptchaToken = null;
+
+// Callback cuando el usuario completa el reCAPTCHA exitosamente
+function onRecaptchaVerified(token) {
+    recaptchaToken = token;
+    console.log("✅ reCAPTCHA verificado:", token.substring(0, 15) + "...");
+}
+
+// Callback cuando el token expira (2 minutos)
+function onRecaptchaExpired() {
+    recaptchaToken = null;
+    console.warn("⚠️ reCAPTCHA expirado");
+    // Resetear visualmente si usas renderizado explícito
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+    alert("Por favor, verifica que no eres un robot nuevamente");
+}
+
+// Función para resetear reCAPTCHA después de un intento fallido
+function resetRecaptcha() {
+    recaptchaToken = null;
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+}
 
 
 // PARTICULAS

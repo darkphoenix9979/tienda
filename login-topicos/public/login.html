@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Anime Auth | Tienda</title>
 <link rel="stylesheet" href="login.css">
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <body>
@@ -24,7 +25,14 @@
         <div class="input-group">
             <i>🔒</i>
             <input type="password" id="loginPassword" placeholder="Contraseña" required>
-            <span class="toggle-pass" onclick="togglePassword('loginPassword')">👁</span>
+            <span class="toggle-pass" onclick="togglePassword('loginPassword')" role="boton" tabindex="0" aria-label="Mostrar u ocultar contraseña">👁</span>
+        </div>
+
+        <div class="g-recaptcha" 
+            data-sitekey="6LeHu-EsAAAAAHx5HnVt12vaYsGYUMHbsXPej7Vj"
+            data-callback="onRecaptchaVerified"
+            data-expired-callback="onRecaptchaExpired"
+            data-size="normal"> 
         </div>
 
         <button type="submit">Entrar</button>
